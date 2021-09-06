@@ -64,7 +64,7 @@ class Shifty:
         self.current_location = [0, 0]
         self.init_odom_subscriber()
 
-        self.min_range = .5  # todo: make this .2 (requires faster response times)
+        self.min_range = 1  # calibrated for .2 meters
         self.current_range_sliding_window = [0 for _ in range(10)]
         self.init_range_subscriber()
 
@@ -85,6 +85,7 @@ class Shifty:
             self.rate.sleep()
 
     def auto_step(self):
+        print(self.auto_velocity_selection)
         if self.auto_velocity_values[self.auto_velocity_selection] == 0:
             self.set_velocity(0, 0)
             return
