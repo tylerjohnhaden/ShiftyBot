@@ -50,12 +50,9 @@ class Shifty:
         self.auto_spin_direction = 1
 
         self.dt = .1  # todo: calibrate, try .01
-        self.rate = rospy.Rate(self.dt)
+        self.rate = rospy.Rate(int(1 / self.dt))
         self.pid_vel_previous_error = 0
         self.pid_vel_integral = 0
-
-        # only used measure how long between heat beat log messages
-        self.heart_beat_length = int(1 / self.dt)
 
         self.current_linear_velocity = 0
         self.current_location = [0, 0]
@@ -74,20 +71,15 @@ class Shifty:
         # self.map_pub = rospy.Publisher('map', <>, queue_size=5)
 
         # allow state variables to populate from subscribers
-        rospy.sleep(1000)
+        rospy.sleep(1)
 
     def run(self):
         while not rospy.is_shutdown():
-            for _ in range(self.heart_beat_length):
-                if self.auto:
-                    self.auto_step()
-                else:
-                    self.tele_step()
-                self.rate.sleep()
-            rospy.loginfo(f'shifty: lin_vel={self.current_linear_velocity} '
-                          f'ang_vel={self.current_tele_angular_velocity} '
-                          f'auto={self.auto} cruise={self.cruise_control}'
-                          f'range={self.get_current_range()}')
+            if self.auto:
+                self.auto_step()
+            else:
+                self.tele_step()
+            self.rate.sleep()
 
     def auto_step(self):
         if self.auto_velocity_values[self.auto_velocity_selection] == 0:
@@ -160,9 +152,9 @@ class Shifty:
                 self.auto_velocity_selection = 3
                 abxy_button_press = True
 
-            self.auto = all(not data.axis[i] for i in [4, 5, 6, 7])  # (LT/RT) = teleoperation
-            self.current_tele_angular_velocity = data.axis[2]  # (RJ) = turning
-            self.current_tele_linear_velocity = data.axis[1]  # (LJ) = forward/backwrad
+            self.auto = all(not data.buttons[i] for i in [4, 5, 6, 7])  # (LT/RT) = teleoperation
+            self.current_tele_angular_velocity = data.axes[2]  # (RJ) = turning
+            self.current_tele_linear_velocity = data.axes[1]  # (LJ) = forward/backwrad
 
             if not self.auto and abxy_button_press:  # (LT/RT) + (A/B/X/Y) = cruise control
                 self.cruise_control = True
