@@ -48,6 +48,8 @@ class Shifty:
         self.auto_velocity_selection = 1
         self.auto_spin_counter = 0
         self.auto_spin_direction = 1
+        self.auto_spin_mean_duration = 4  # seconds
+        self.auto_spin_median_duration = 2  # seconds
 
         self.dt = .01  # todo: calibrate, try .01
         self.hz = int(1 / self.dt)
@@ -59,7 +61,7 @@ class Shifty:
         self.current_location = [0, 0]
         self.init_odom_subscriber()
 
-        self.min_range = .2
+        self.min_range = .5  # todo: make this .2 (requires faster response times)
         self.current_range_sliding_window = [0 for _ in range(10)]
         self.init_range_subscriber()
 
@@ -88,7 +90,10 @@ class Shifty:
             return
 
         if self.get_current_range() < self.min_range and self.auto_spin_counter == 0:
-            self.auto_spin_counter = int(random.gauss(2 * self.hz, self.hz / 2))  # todo: calibrate
+            self.auto_spin_counter = int(random.gauss(
+                self.auto_spin_mean_duration * self.hz,
+                self.auto_spin_median_duration * self.hz
+            ))
             self.auto_spin_direction = (random.randint(0, 1) * 2) - 1
 
         if self.auto_spin_counter > 0:
@@ -117,7 +122,7 @@ class Shifty:
 
         vel = Twist()
         vel.angular.z = target_angular_velocity
-        vel.linear.x = target_linear_velocity
+        vel.linear.x = target_linear_velocity + pid_output
         self.vel_pub.publish(vel)
 
     def init_odom_subscriber(self):
