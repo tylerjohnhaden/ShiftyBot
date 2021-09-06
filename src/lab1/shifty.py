@@ -64,7 +64,7 @@ class Shifty:
         self.current_location = [0, 0]
         self.init_odom_subscriber()
 
-        self.min_range = 1  # calibrated for .2 meters
+        self.min_range = .4  # calibrated for .2 meters
         self.current_range_sliding_window = [0 for _ in range(10)]
         self.init_range_subscriber()
 
@@ -90,7 +90,7 @@ class Shifty:
             self.set_velocity(0, 0)
             return
 
-        if self.get_current_range() < self.min_range and self.auto_spin_counter == 0:
+        if self.currently_sees_obstacle() and self.auto_spin_counter == 0:
             self.set_velocity(0, 0)
             self.auto_spin_counter = int(random.gauss(
                 self.auto_spin_mean_duration * self.hz,
@@ -179,9 +179,11 @@ class Shifty:
         self.pid_vel_previous_error = error
         return kp * error + ki * self.pid_vel_integral + kd * derivative
 
-    def get_current_range(self):
+    def currently_sees_obstacle(self):
         # error on the side of safety
-        return min(self.current_range_sliding_window)
+        return min(self.current_range_sliding_window) < (self.min_range * (
+            self.auto_velocity_values[self.auto_velocity_selection] / self.auto_velocity_values[1]
+        ))
 
 
 if __name__ == "__main__":
