@@ -180,7 +180,8 @@ class Shifty:
         return kp * error + ki * self.pid_vel_integral + kd * derivative
 
     def get_current_range(self):
-        return sum(self.current_range_sliding_window) / len(self.current_range_sliding_window)
+        # error on the side of safety
+        return min(self.current_range_sliding_window)
 
 
 if __name__ == "__main__":
