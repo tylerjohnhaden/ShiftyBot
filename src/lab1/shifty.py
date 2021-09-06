@@ -64,7 +64,7 @@ class Shifty:
         self.current_location = [0, 0]
         self.init_odom_subscriber()
 
-        self.min_range = .4  # calibrated for .2 meters
+        self.min_range = .2  # calibrated for .2 meters
         self.current_range_sliding_window = [0 for _ in range(10)]
         self.init_range_subscriber()
 
@@ -180,8 +180,8 @@ class Shifty:
         return kp * error + ki * self.pid_vel_integral + kd * derivative
 
     def currently_sees_obstacle(self):
-        # error on the side of safety
-        return min(self.current_range_sliding_window) < (self.min_range * (
+        # error on the side of safety, calibrated for .2 meters at different speeds
+        return min(self.current_range_sliding_window) < (self.min_range * 1.5 * (
             self.auto_velocity_values[self.auto_velocity_selection] / self.auto_velocity_values[1]
         ))
 
