@@ -38,8 +38,6 @@ speeds to the following buttons on the joystick: green button = 0.3m/s; blu = 0.
 todo:
 5. extra: build a map using the IR sensor data and odom data. Collect data and plot the map."""
 
-class MapPoint:
-
 
 class Shifty:
     def __init__(self):
@@ -64,7 +62,7 @@ class Shifty:
         self.init_odom_subscriber()
 
         self.min_range = .2
-        self.current_range = 0
+        self.current_range_sliding_window = [0 for _ in range(10)]
         self.init_range_subscriber()
 
         self.cruise_control = True
@@ -89,14 +87,14 @@ class Shifty:
             rospy.loginfo(f'shifty: lin_vel={self.current_linear_velocity} '
                           f'ang_vel={self.current_tele_angular_velocity} '
                           f'auto={self.auto} cruise={self.cruise_control}'
-                          f'range={self.current_range}')
+                          f'range={self.get_current_range()}')
 
     def auto_step(self):
         if self.auto_velocity_values[self.auto_velocity_selection] == 0:
             self.set_velocity(0, 0)
             return
 
-        if self.current_range < self.min_range and self.auto_spin_counter == 0:
+        if self.get_current_range() < self.min_range and self.auto_spin_counter == 0:
             self.auto_spin_counter = random.randint(5, 100)  # todo: calibrate
             self.auto_spin_direction = (random.randint(0, 1) * 2) - 1
 
@@ -137,12 +135,14 @@ class Shifty:
 
     def init_range_subscriber(self):
         def _range_callback(data):
-            self.current_range = data.range
+            self.current_range_sliding_window.pop(0)
+            self.current_range_sliding_window.append(data.range)
 
             # todo: log map boundary points euler_from_quaternion?
             # self.map_pub.publish()
 
-        rospy.Subscriber("/range", Range, _range_callback)
+        rospy.Subscriber("/range/fl", Range, _range_callback)
+        rospy.Subscriber("/range/fr", Range, _range_callback)
 
     def init_joystick_subscriber(self):
         def _joystick_callback(data):
@@ -177,6 +177,9 @@ class Shifty:
         derivative = (error - self.pid_vel_previous_error) / self.dt
         self.pid_vel_previous_error = error
         return kp * error + ki * self.pid_vel_integral + kd * derivative
+
+    def get_current_range(self):
+        return sum(self.current_range_sliding_window) / len(self.current_range_sliding_window)
 
 
 if __name__ == "__main__":
