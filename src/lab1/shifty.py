@@ -44,6 +44,8 @@ class Shifty:
     def __init__(self):
         rospy.init_node('shifty', anonymous=True)
 
+        self.vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
+
         self.auto = True
         self.auto_velocity_values = [0, .3, .5, .6]
         self.auto_velocity_selection = 1
@@ -52,7 +54,7 @@ class Shifty:
         self.auto_spin_mean_duration = 4  # seconds
         self.auto_spin_median_duration = 2  # seconds
 
-        self.dt = .01  # todo: calibrate, try .01
+        self.dt = .1  # todo: calibrate, try .01
         self.hz = int(1 / self.dt)
         self.rate = rospy.Rate(self.hz)
         self.pid_vel_previous_error = 0
@@ -71,9 +73,6 @@ class Shifty:
         self.current_tele_angular_velocity = 0
         self.init_joystick_subscriber()
 
-        self.vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
-        self.combined_range_pub = rospy.Publisher('comb_range', String, queue_size=1)
-
         # allow state variables to populate from subscribers
         rospy.sleep(1)
 
@@ -91,11 +90,13 @@ class Shifty:
             return
 
         if self.get_current_range() < self.min_range and self.auto_spin_counter == 0:
+            self.set_velocity(0, 0)
             self.auto_spin_counter = int(random.gauss(
                 self.auto_spin_mean_duration * self.hz,
                 self.auto_spin_median_duration * self.hz
             ))
             self.auto_spin_direction = (random.randint(0, 1) * 2) - 1
+            return
 
         if self.auto_spin_counter > 0:
             self.auto_spin_counter -= 1
@@ -122,7 +123,7 @@ class Shifty:
 
         vel = Twist()
         vel.angular.z = target_angular_velocity
-        vel.linear.x = target_linear_velocity + pid_output
+        vel.linear.x = round(target_linear_velocity + pid_output, 2)
         self.vel_pub.publish(vel)
 
     def init_odom_subscriber(self):
@@ -136,11 +137,6 @@ class Shifty:
         def _range_callback(data):
             self.current_range_sliding_window.pop(0)
             self.current_range_sliding_window.append(data.range)
-
-            if self.get_current_range() < self.min_range:
-                self.set_velocity(0, 0)
-
-            self.combined_range_pub.publish(self.get_current_range())
 
             # todo: log map boundary points euler_from_quaternion?
             # self.map_pub.publish()
