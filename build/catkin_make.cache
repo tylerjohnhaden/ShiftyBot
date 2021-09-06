@@ -1,0 +1,2 @@
+lab1
+-DCATKIN_DEVEL_PREFIX=/home/robot5/tyler_scratch/devel -DCMAKE_INSTALL_PREFIX=/home/robot5/tyler_scratch/install -G Unix Makefiles
