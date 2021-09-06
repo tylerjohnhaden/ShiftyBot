@@ -49,8 +49,9 @@ class Shifty:
         self.auto_spin_counter = 0
         self.auto_spin_direction = 1
 
-        self.dt = .1  # todo: calibrate, try .01
-        self.rate = rospy.Rate(int(1 / self.dt))
+        self.dt = .01  # todo: calibrate, try .01
+        self.hz = int(1 / self.dt)
+        self.rate = rospy.Rate(self.hz)
         self.pid_vel_previous_error = 0
         self.pid_vel_integral = 0
 
@@ -87,7 +88,7 @@ class Shifty:
             return
 
         if self.get_current_range() < self.min_range and self.auto_spin_counter == 0:
-            self.auto_spin_counter = random.randint(5, 100)  # todo: calibrate
+            self.auto_spin_counter = int(random.gauss(2 * self.hz, self.hz / 2))  # todo: calibrate
             self.auto_spin_direction = (random.randint(0, 1) * 2) - 1
 
         if self.auto_spin_counter > 0:
@@ -111,7 +112,8 @@ class Shifty:
 
     def set_velocity(self, target_linear_velocity=.0, target_angular_velocity=.0):
         # todo: figure out how to use this
-        # pid_output = self.pid_vel_step(target_linear_velocity, self.current_linear_velocity)
+        pid_output = self.pid_vel_step(target_linear_velocity, self.current_linear_velocity)
+        print(pid_output, target_linear_velocity, self.current_linear_velocity)
 
         vel = Twist()
         vel.angular.z = target_angular_velocity
