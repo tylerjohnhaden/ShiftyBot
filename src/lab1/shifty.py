@@ -7,6 +7,7 @@ import rospy
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Imu, Joy, Range
 from nav_msgs.msg import Odometry
+from std_msgs.msg import String
 
 """Autonomous Mobile Robots
 Group: 5 "Shifty"
@@ -71,7 +72,7 @@ class Shifty:
         self.init_joystick_subscriber()
 
         self.vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
-        # self.map_pub = rospy.Publisher('map', <>, queue_size=5)
+        self.combined_range_pub = rospy.Publisher('comb_range', String, queue_size=1)
 
         # allow state variables to populate from subscribers
         rospy.sleep(1)
@@ -116,9 +117,8 @@ class Shifty:
             )
 
     def set_velocity(self, target_linear_velocity=.0, target_angular_velocity=.0):
-        # todo: figure out how to use this
+        # todo: ensure this is properly working
         pid_output = self.pid_vel_step(target_linear_velocity, self.current_linear_velocity)
-        print(pid_output, target_linear_velocity, self.current_linear_velocity)
 
         vel = Twist()
         vel.angular.z = target_angular_velocity
@@ -136,6 +136,11 @@ class Shifty:
         def _range_callback(data):
             self.current_range_sliding_window.pop(0)
             self.current_range_sliding_window.append(data.range)
+
+            if self.get_current_range() < self.min_range:
+                self.set_velocity(0, 0)
+
+            self.combined_range_pub.publish(self.get_current_range())
 
             # todo: log map boundary points euler_from_quaternion?
             # self.map_pub.publish()
@@ -161,7 +166,7 @@ class Shifty:
 
             self.auto = all(not data.buttons[i] for i in [4, 5, 6, 7])  # (LT/RT) = teleoperation
             self.current_tele_angular_velocity = data.axes[2]  # (RJ) = turning
-            self.current_tele_linear_velocity = data.axes[1]  # (LJ) = forward/backwrad
+            self.current_tele_linear_velocity = 0.5 * data.axes[1]  # (LJ) = forward/backward
 
             if not self.auto and abxy_button_press:  # (LT/RT) + (A/B/X/Y) = cruise control
                 self.cruise_control = True
