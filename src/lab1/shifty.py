@@ -51,8 +51,8 @@ class Shifty:
         self.auto_velocity_selection = 1
         self.auto_spin_counter = 0
         self.auto_spin_direction = 1
-        self.auto_spin_mean_duration = 4  # seconds
-        self.auto_spin_median_duration = 2  # seconds
+        self.auto_spin_mean_duration = 2  # seconds
+        self.auto_spin_median_duration = 1  # seconds
 
         self.dt = .1  # todo: calibrate, try .01
         self.hz = int(1 / self.dt)
@@ -100,7 +100,7 @@ class Shifty:
 
         if self.auto_spin_counter > 0:
             self.auto_spin_counter -= 1
-            self.set_velocity(.1, self.auto_spin_direction)  # todo: calibrate
+            self.set_velocity(0, self.auto_spin_direction)  # todo: calibrate
             return
 
         self.set_velocity(self.auto_velocity_values[self.auto_velocity_selection], 0)
