@@ -48,7 +48,7 @@ class Shifty:
 
         self.auto = True
         self.auto_velocity_values = [0, .3, .5, .6]
-        self.auto_velocity_selection = 1
+        self.auto_velocity_selection = 0
         self.auto_spin_counter = 0
         self.auto_spin_direction = 1
         self.auto_spin_mean_duration = 2  # seconds
@@ -65,6 +65,7 @@ class Shifty:
         self.init_odom_subscriber()
 
         self.min_range = .2  # calibrated for .2 meters
+        self.range_scale = 1.7  # todo: calibrate futher
         self.current_range_sliding_window = [0 for _ in range(10)]
         self.init_range_subscriber()
 
@@ -181,7 +182,7 @@ class Shifty:
 
     def currently_sees_obstacle(self):
         # error on the side of safety, calibrated for .2 meters at different speeds
-        return min(self.current_range_sliding_window) < (self.min_range * 1.5 * (
+        return min(self.current_range_sliding_window) < (self.min_range * self.range_scale * (
             self.auto_velocity_values[self.auto_velocity_selection] / self.auto_velocity_values[1]
         ))
 
