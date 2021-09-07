@@ -135,7 +135,12 @@ class Shifty:
             self.current_linear_velocity = data.twist.twist.linear.x
             self.current_location = [data.pose.pose.position.x, data.pose.pose.position.y]
 
-            roll, pitch, yaw = euler_from_quaternion(data.pose.pose.orientation)
+            roll, pitch, yaw = euler_from_quaternion([
+                data.pose.pose.orientation.x,
+                data.pose.pose.orientation.y,
+                data.pose.pose.orientation.z,
+                data.pose.pose.orientation.w,
+            ])
             self.map_pub.publish('({}, {}, {}) {}'.format(roll, pitch, yaw, self.current_location))
 
         rospy.Subscriber("/odom", Odometry, _odom_callback)
