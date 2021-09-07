@@ -8,6 +8,7 @@ from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Imu, Joy, Range
 from nav_msgs.msg import Odometry
 from std_msgs.msg import String
+from tf.transformations import euler_from_quaternion
 
 """Autonomous Mobile Robots
 Group: 5 "Shifty"
@@ -45,6 +46,7 @@ class Shifty:
         rospy.init_node('shifty', anonymous=True)
 
         self.vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
+        self.map_pub = rospy.Publisher('/map', String, queue_size=1)
 
         self.auto = True
         self.auto_velocity_values = [0, .3, .5, .6]
@@ -133,12 +135,17 @@ class Shifty:
             self.current_linear_velocity = data.twist.twist.linear.x
             self.current_location = [data.pose.pose.position.x, data.pose.pose.position.y]
 
+            roll, pitch, yaw = euler_from_quaternion(data.pose.pose.orientation)
+            self.map_pub.publish('({}, {}, {}) {}'.format(roll, pitch, yaw, self.current_location))
+
         rospy.Subscriber("/odom", Odometry, _odom_callback)
 
     def init_range_subscriber(self):
         def _range_callback(data):
             self.current_range_sliding_window.pop(0)
             self.current_range_sliding_window.append(data.range)
+
+
 
             # todo: log map boundary points euler_from_quaternion?
             # self.map_pub.publish()
@@ -163,7 +170,7 @@ class Shifty:
                 abxy_button_press = True
 
             self.auto = all(not data.buttons[i] for i in [4, 5, 6, 7])  # (LT/RT) = teleoperation
-            self.current_tele_angular_velocity = data.axes[2]  # (RJ) = turning
+            self.current_tele_angular_velocity = 2 * data.axes[2]  # (RJ) = turning
             self.current_tele_linear_velocity = 0.5 * data.axes[1]  # (LJ) = forward/backward
 
             if not self.auto and abxy_button_press:  # (LT/RT) + (A/B/X/Y) = cruise control
