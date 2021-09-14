@@ -124,14 +124,11 @@ class Shifty:
             )
 
     def set_velocity(self, target_linear_velocity=.0, target_angular_velocity=.0):
-        dv = self.pid_vel_step(target_linear_velocity, self.current_linear_velocity)
-        command_velocity = self.current_linear_velocity + dv
-        if abs(command_velocity) < 0.05:
-            command_velocity = 0
+        pid_output = self.pid_vel_step(target_linear_velocity, self.current_linear_velocity)
 
         vel = Twist()
         vel.angular.z = target_angular_velocity
-        vel.linear.x = command_velocity
+        vel.linear.x = target_linear_velocity + pid_output
         self.vel_pub.publish(vel)
 
     def init_odom_subscriber(self):

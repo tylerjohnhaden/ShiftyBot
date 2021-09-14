@@ -61,9 +61,6 @@
     <exec_depend>nav_msgs</exec_depend>
     <exec_depend>rospy</exec_depend>
     <exec_depend>sensor_msgs</exec_depend>
-
-    <build_depend>lab1</build_depend>
-    <exec_depend>lab1</exec_depend>
     <exec_depend>message_runtime</exec_depend>
 
 
