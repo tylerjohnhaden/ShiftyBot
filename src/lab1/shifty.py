@@ -153,7 +153,7 @@ class Shifty:
                 self.current_range_sliding_window.append(data.range)
 
                 if data.range < data.max_range / 2:
-                    self.map_pub.publish('''{{"x":{0},"y":{1},"theta":{2},"d":{3},"side":{4}}}'''.format(
+                    self.map_pub.publish('''{0};{1};{2};{3}'''.format(
                         self.current_location[0],
                         self.current_location[1],
                         self.current_direction,

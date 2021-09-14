@@ -16,7 +16,7 @@ except ImportError:
 ON_POSIX = 'posix' in sys.builtin_module_names
 
 topic = '/map'
-pattern = re.compile(r'{"x":(\d+(\.\d+)?),"y":(\d+(\.\d+)?),"theta":(\d+(\.\d+)?),"d":(\d+(\.\d+)?),"side":([LR])}')
+pattern = re.compile(r'data: "[\d.]+;[\d.]+;[\d.]+;[LR]"')
 room_longest_side_length = 20  # meters
 x_points = []
 y_points = []
@@ -59,7 +59,7 @@ def update_output(out):
 
 if __name__ == '__main__':
     for thing in topic_listener(topic=topic):
-        print(f'>>{thing}<<')
+        print(thing)
         print(parse_message(thing))
 
     # fig, ax = plt.subplots()
