@@ -26,10 +26,10 @@ def parse_message(m):
     match = pattern.search(m)
     if match:
         x = match.group(1)
-        y = match.group(3)
-        theta = match.group(5)
-        d = match.group(7)
-        # side = match.group(9)  # not currently used, I figured theta might be adjusted +/- based on side
+        y = match.group(2)
+        theta = match.group(3)
+        d = match.group(4)
+        # side = match.group(5)  # not currently used, I figured theta might be adjusted +/- based on side
 
         x_boundary = (np.cos(theta) * d) + x
         y_boundary = (np.sin(theta) * d) + y
@@ -44,10 +44,10 @@ def topic_listener(topic):
         yield stdout_line
     popen.stdout.close()
 
+
 def update_output(out):
     global x_points
     global y_points
-    print('here')
 
     for line in iter(out.readline, b''):
         x, y, err = parse_message(line)
@@ -59,7 +59,6 @@ def update_output(out):
 
 if __name__ == '__main__':
     for thing in topic_listener(topic=topic):
-        print(thing)
         print(parse_message(thing))
 
     # fig, ax = plt.subplots()
