@@ -1,0 +1,15 @@
+#!/usr/bin/python
+
+print('hello')
+print('hello')
+print('hello')
+print('hello')
+print('hello')
+print('hello')
+print('hello')
+
+import time
+
+while True:
+  time.sleep(1)
+  print('hello')
