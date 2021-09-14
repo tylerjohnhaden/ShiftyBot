@@ -16,7 +16,7 @@ except ImportError:
 ON_POSIX = 'posix' in sys.builtin_module_names
 
 topic = '/map'
-pattern = re.compile(r'data: "[\d.]+;[\d.]+;[\d.]+;[LR]"')
+pattern = re.compile(r'data: "([-\d.]+);([-\d.]+);([-\d.]+);([-\d.]+);[LR]"')
 room_longest_side_length = 20  # meters
 x_points = []
 y_points = []
