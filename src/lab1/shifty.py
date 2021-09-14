@@ -2,6 +2,7 @@
 
 import random
 
+import numpy as np
 import rosbag
 import rospy
 from geometry_msgs.msg import Twist
@@ -46,15 +47,15 @@ class Shifty:
         rospy.init_node('shifty', anonymous=True)
 
         self.vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
-        self.map_pub = rospy.Publisher('/map', String, queue_size=1)
+        self.map_pub = rospy.Publisher('/map', String, queue_size=4)
 
         self.auto = True
         self.auto_velocity_values = [0, .3, .5, .6]
         self.auto_velocity_selection = 0
         self.auto_spin_counter = 0
         self.auto_spin_direction = 1
-        self.auto_spin_mean_duration = 2  # seconds
-        self.auto_spin_median_duration = 1  # seconds
+        self.auto_spin_mean_duration = 3  # seconds
+        self.auto_spin_stddev_duration = 1  # seconds
 
         self.dt = .1  # todo: calibrate, try .01
         self.hz = int(1 / self.dt)
@@ -64,10 +65,12 @@ class Shifty:
 
         self.current_linear_velocity = 0
         self.current_location = [0, 0]
+        self.current_direction = 0
         self.init_odom_subscriber()
 
-        self.min_range = .2  # calibrated for .2 meters
-        self.range_scale = 1.7  # todo: calibrate futher
+        self.min_range = .2  # 0.2 meters
+        self.range_scale = 1.7  # calibrated for the above value
+        self.range_threshold = 5
         self.current_range_sliding_window = [0 for _ in range(10)]
         self.init_range_subscriber()
 
@@ -88,7 +91,6 @@ class Shifty:
             self.rate.sleep()
 
     def auto_step(self):
-        print(self.auto_velocity_selection)
         if self.auto_velocity_values[self.auto_velocity_selection] == 0:
             self.set_velocity(0, 0)
             return
@@ -97,7 +99,7 @@ class Shifty:
             self.set_velocity(0, 0)
             self.auto_spin_counter = int(random.gauss(
                 self.auto_spin_mean_duration * self.hz,
-                self.auto_spin_median_duration * self.hz
+                self.auto_spin_stddev_duration * self.hz
             ))
             self.auto_spin_direction = (random.randint(0, 1) * 2) - 1
             return
@@ -122,12 +124,14 @@ class Shifty:
             )
 
     def set_velocity(self, target_linear_velocity=.0, target_angular_velocity=.0):
-        # todo: ensure this is properly working
-        pid_output = self.pid_vel_step(target_linear_velocity, self.current_linear_velocity)
+        dv = self.pid_vel_step(target_linear_velocity, self.current_linear_velocity)
+        command_velocity = self.current_linear_velocity + dv
+        if abs(command_velocity) < 0.05:
+            command_velocity = 0
 
         vel = Twist()
         vel.angular.z = target_angular_velocity
-        vel.linear.x = round(target_linear_velocity + pid_output, 2)
+        vel.linear.x = command_velocity
         self.vel_pub.publish(vel)
 
     def init_odom_subscriber(self):
@@ -135,28 +139,34 @@ class Shifty:
             self.current_linear_velocity = data.twist.twist.linear.x
             self.current_location = [data.pose.pose.position.x, data.pose.pose.position.y]
 
-            roll, pitch, yaw = euler_from_quaternion([
+            _, _, yaw_radians = euler_from_quaternion([
                 data.pose.pose.orientation.x,
                 data.pose.pose.orientation.y,
                 data.pose.pose.orientation.z,
                 data.pose.pose.orientation.w,
             ])
-            self.map_pub.publish('({}, {}, {}) {}'.format(roll, pitch, yaw, self.current_location))
+            self.current_direction = yaw_radians
 
         rospy.Subscriber("/odom", Odometry, _odom_callback)
 
     def init_range_subscriber(self):
-        def _range_callback(data):
-            self.current_range_sliding_window.pop(0)
-            self.current_range_sliding_window.append(data.range)
+        def _range_callback_wrapper(left=True):
+            def _left_right_callback(data):
+                self.current_range_sliding_window.pop(0)
+                self.current_range_sliding_window.append(data.range)
 
+                if data.range < data.max_range / 2:
+                    self.map_pub.publish('''{{"x":{0},"y":{1},"theta":{2},"d":{3},"side":{4}}}'''.format(
+                        self.current_location[0],
+                        self.current_location[1],
+                        self.current_direction,
+                        data.range,
+                        'L' if left else 'R',
+                    ))
+            return _left_right_callback
 
-
-            # todo: log map boundary points euler_from_quaternion?
-            # self.map_pub.publish()
-
-        rospy.Subscriber("/range/fl", Range, _range_callback)
-        rospy.Subscriber("/range/fr", Range, _range_callback)
+        rospy.Subscriber("/range/fl", Range, _range_callback_wrapper(left=True))
+        rospy.Subscriber("/range/fr", Range, _range_callback_wrapper(left=False))
 
     def init_joystick_subscriber(self):
         def _joystick_callback(data):
