@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """Autonomous Mobile Robots - Lab 1
 Group: 5 "Shifty"
 
