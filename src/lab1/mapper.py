@@ -14,7 +14,7 @@ ON_POSIX = 'posix' in sys.builtin_module_names
 
 topic = '/map'
 pattern = re.compile(r'data: "([-\d.]+);([-\d.]+);([-\d.]+);([-\d.]+);[LR]"')
-room_longest_side_length = 20  # meters
+room_longest_side_length = 20  # meters todo: this is not accurate
 x_points = []
 y_points = []
 
@@ -26,7 +26,15 @@ def parse_message(m):
         y = float(match.group(2))
         theta = float(match.group(3))
         d = float(match.group(4))
-        # side = match.group(5)  # not currently used, I figured theta might be adjusted +/- based on side
+        side = match.group(5)
+
+        adjustment = 0
+        if side == 'R':
+            adjustment = -.1
+        elif side == 'L':
+            adjustment = .1
+
+        theta += adjustment
 
         x_boundary = (np.cos(theta) * d) + x
         y_boundary = (np.sin(theta) * d) + y
@@ -53,11 +61,13 @@ def background():
         if not err:
             x_points.append(x)
             y_points.append(y)
+            print('x:', x, 'y:', y)
 
 
 if __name__ == '__main__':
     background_process = threading.Thread(target=background)
     background_process.start()
+    print('background rostopic listener started')
 
     fig, ax = plt.subplots()
     ln = plt.scatter([], [])
@@ -71,8 +81,8 @@ if __name__ == '__main__':
 
 
     def update(frame):
-        print(x_points)
-        ln.set_offsets(list(zip(x_points, y_points)))
+        if len(x_points) > 0:
+            ln.set_offsets(list(zip(x_points, y_points)))
         return ln,
 
 
