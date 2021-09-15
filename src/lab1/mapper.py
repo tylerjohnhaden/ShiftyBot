@@ -1,10 +1,8 @@
 #!/usr/bin/env python
-import random
 import re
 import sys
 from subprocess import PIPE, Popen
 import threading
-import time
 
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
@@ -13,7 +11,7 @@ import numpy as np
 ON_POSIX = 'posix' in sys.builtin_module_names
 
 topic = '/map'
-pattern = re.compile(r'data: "([-\d.]+);([-\d.]+);([-\d.]+);([-\d.]+);[LR]"')
+pattern = re.compile(r'data: "([-\d.]+);([-\d.]+);([-\d.]+);([-\d.]+);([LR])"')
 room_longest_side_length = 20  # meters todo: this is not accurate
 x_points = []
 y_points = []
@@ -22,25 +20,26 @@ y_points = []
 def parse_message(m):
     try:
         match = pattern.search(m)
-        x = float(match.group(1))
-        y = float(match.group(2))
-        theta = float(match.group(3))
-        d = float(match.group(4))
-        side = match.group(5)
+        if match:
+            x = float(match.group(1))
+            y = float(match.group(2))
+            theta = float(match.group(3))
+            d = float(match.group(4))
+            side = match.group(5)
 
-        adjustment = 0
-        if side == 'R':
-            adjustment = -.1
-        elif side == 'L':
-            adjustment = .1
+            adjustment = 0
+            if side == 'R':
+                adjustment = -.1
+            elif side == 'L':
+                adjustment = .1
 
-        theta += adjustment
+            theta += adjustment
 
-        x_boundary = (np.cos(theta) * d) + x
-        y_boundary = (np.sin(theta) * d) + y
+            x_boundary = (np.cos(theta) * d) + x
+            y_boundary = (np.sin(theta) * d) + y
 
-        return x_boundary, y_boundary, False
-
+            return x_boundary, y_boundary, False
+        return None, None, True
     except Exception as e:
         print('error:', e)
         return None, None, True
