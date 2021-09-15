@@ -8,11 +8,10 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
 
-ON_POSIX = 'posix' in sys.builtin_module_names
-
 topic = '/map'
 pattern = re.compile(r'data: "([-\d.]+);([-\d.]+);([-\d.]+);([-\d.]+);([LR])"')
-room_longest_side_length = 20  # meters todo: this is not accurate
+room_longest_side_length = 20  # meters
+left_right_theta_adjustment = 0.1  # todo: calibrate this
 x_points = []
 y_points = []
 
@@ -27,13 +26,10 @@ def parse_message(m):
             d = float(match.group(4))
             side = match.group(5)
 
-            adjustment = 0
             if side == 'R':
-                adjustment = -.1
+                theta -= left_right_theta_adjustment
             elif side == 'L':
-                adjustment = .1
-
-            theta += adjustment
+                theta += left_right_theta_adjustment
 
             x_boundary = (np.cos(theta) * d) + x
             y_boundary = (np.sin(theta) * d) + y
@@ -46,10 +42,17 @@ def parse_message(m):
 
 
 def topic_listener():
-    popen = Popen(['rostopic', 'echo', topic], stdout=PIPE, universal_newlines=True, close_fds=ON_POSIX)
+    popen = Popen(
+        ['rostopic', 'echo', topic],
+        stdout=PIPE,
+        universal_newlines=True,
+        close_fds=('posix' in sys.builtin_module_names)
+    )
     for stdout_line in iter(popen.stdout.readline, ''):
         yield stdout_line
+    # todo: this is a bug since the bottom two lines never run
     popen.stdout.close()
+    popen.kill()
 
 
 def background():
@@ -87,3 +90,4 @@ if __name__ == '__main__':
 
     ani = FuncAnimation(fig, update, init_func=init, blit=True, interval=1000)
     plt.show()
+    background_process.join()  # todo: test this
