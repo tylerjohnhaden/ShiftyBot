@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
 
+"""WARINGIN!: THIS WILL LIKELY CAUSE THE LAB LAPTOP TO STALL"""
+quit()
+
 topic = '/map'
 pattern = re.compile(r'data: "([-\d.]+);([-\d.]+);([-\d.]+);([-\d.]+);([LR])"')
 room_longest_side_length = 20  # meters
