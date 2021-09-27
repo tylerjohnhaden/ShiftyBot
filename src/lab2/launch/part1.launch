@@ -3,5 +3,5 @@
         <param name="dev" type="string" value="/dev/input/js0" />
     </node>
 
-    <node name="shifty_node" pkg="lab2" type="part1.py"/>
+    <node name="shifty_node" pkg="lab2" type="shifty.py" output="screen"/>
 </launch>
