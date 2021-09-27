@@ -18,11 +18,11 @@ rospy.loginfo('here!')
 class Shifty(object):
     def __init__(self):
         # Part specific constants
-        self.goal_x = 1.5 * (3 / 2)
-        self.goal_y = -1.5 * (9 / 10)
+        self.goal_x = -1.5
+        self.goal_y = 1.5
         self.goal_radius = 0.1
         self.throttle_bump = 0
-        self.steering_Kp = 1.5
+        self.steering_Kp = .9
         self.safety_range = 0.34
 
         # Bot + heatbeat
@@ -52,15 +52,16 @@ class Shifty(object):
         self.init_range_subscriber()
 
         self.velocity_low_pass = 0.001
-        self.velocity_high_pass = 0.2
+        self.velocity_high_pass = 0.3
+        self.angular_velocity_high_pass = 2
         self.vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 
-        # allow state variables to populate from subscribers
-        rospy.sleep(0.5)
         self.file_step()
 
     def run(self):
         rospy.loginfo('Running Control Loop ...')
+        # allow state variables to populate from subscribers
+        rospy.sleep(0.5)
         self._control_loop()
 
     def _control_loop(self):
@@ -79,8 +80,8 @@ class Shifty(object):
             self.set_velocity(0, 0)
             return
 
-        x_diff = self.pose_x - self.goal_x
-        y_diff = self.pose_y - self.goal_y
+        x_diff = self.goal_x - self.pose_x
+        y_diff = self.goal_y - self.pose_y
         distance_from_goal = np.sqrt((x_diff ** 2) + (y_diff ** 2))
         rospy.loginfo('Goal = %s, xy_diff = (%s, %s)', distance_from_goal, x_diff, y_diff)
 
@@ -90,12 +91,15 @@ class Shifty(object):
             return
 
         theta_d = np.arctan(y_diff / x_diff)
-        steering = self.steering_Kp * self.fix_angle(theta_d - self.pose_theta)
+        steering = self.steering_Kp * self.fix_angle(theta_d - self.pose_theta - np.pi)
 
         rospy.loginfo('Robot Theta = %s, Theta_d = %s, Steering = %s', self.pose_theta, theta_d, steering)
 
-        self.set_velocity(distance_from_goal + self.throttle_bump, steering)
-        # self.set_velocity(0.1, 0)
+        # self.set_velocity(distance_from_goal + self.throttle_bump, steering)
+        if abs(steering) > .1:
+		    self.set_velocity(0, steering)
+        else:
+            self.set_velocity(distance_from_goal + self.throttle_bump, steering)
 
     def _file_listener_loop(self):
         while not rospy.is_shutdown():
@@ -166,9 +170,13 @@ class Shifty(object):
 
         if target_linear_velocity > self.velocity_high_pass:
             target_linear_velocity = self.velocity_high_pass
-
         if target_linear_velocity < -self.velocity_high_pass:
             target_linear_velocity = -self.velocity_high_pass
+
+        if target_angular_velocity > self.angular_velocity_high_pass:
+            target_angular_velocity = self.angular_velocity_high_pass
+        if target_angular_velocity < -self.angular_velocity_high_pass:
+            target_angular_velocity = -self.angular_velocity_high_pass
 
         vel = Twist()
         vel.linear.x = target_linear_velocity
