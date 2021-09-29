@@ -16,14 +16,16 @@ from tf.transformations import euler_from_quaternion
 class Shifty(object):
     def __init__(self):
         # Part specific constants
-        self.goals = [[1.5, 1.5]]
+        #self.goals = np.array([[1.5, 1.5], [1.5, -1.5], [-1.5, -1.5], [-1.5, 1.5]])
+        self.goals = np.array([[.5, .5], [.5, -.5], [-.5, -.5], [-.5, .5]])
         self.goal_radius = 0.1
-        self.throttle_bump = 0
-        self.steering_Kp = .9
+        self.throttle_bump = 0.01
+        self.steering_Kp = .6
+        self.throttle_Kp = .2
         self.safety_range = 0.34
 
         # Bot + heatbeat
-        rospy.init_node('shifty', anonymous=True, log_level=rospy.DEBUG)
+        rospy.init_node('shifty', anonymous=True, log_level=rospy.INFO)
         self.dt = .01  # todo: calibrate, try .01
         self.hz = int(1 / self.dt)
         self.rate = rospy.Rate(self.hz)
@@ -52,26 +54,31 @@ class Shifty(object):
     def run(self):
         rospy.loginfo('Running Control Loop ...')
         while not rospy.is_shutdown():
-            self.step()
-            self.rate.sleep()
+            for i in range(len(self.goals)):
+                at_goal = self.step(i)
+                self.rate.sleep()
+                while not at_goal:
+                    at_goal = self.step(i)
+                    self.rate.sleep()
+                
 
-    def step(self):
+    def step(self, goal_index):
         if not self.is_global_pose_set:
             # We don't know the global coordinates yet
             self.set_velocity(0, 0)
-            return
+            return False
 
         if min(self.range_sliding_window) < self.safety_range * (self.linear_velocity / 0.3):
             # Robot is within range of obstacle, pause run
             self.set_velocity(0, 0)
-            return
+            return False
 
         if any(self.joystick_buttons):
             # Joystick button is pressed, pause run
             self.set_velocity(0, 0)
-            return
+            return False
 
-        goal = self.goals[0]
+        goal = self.goals[goal_index]
         delta = goal - np.array([self.pose_x, self.pose_y])
         delta_distance = distance = np.sqrt(sum(np.square(delta)))
         delta_theta = np.arctan2(delta[1], delta[0])  # range (-pi, pi)
@@ -85,13 +92,14 @@ class Shifty(object):
         if delta_distance < self.goal_radius:
             # Robot has reached the gaol, pause run
             self.set_velocity(0, 0)
-            return
+            return True
 
         # self.set_velocity(distance_from_goal + self.throttle_bump, steering)
         if False and abs(control_angular_velocity) > .1:
             self.set_velocity(0, control_angular_velocity)
         else:
-            self.set_velocity(delta_distance + self.throttle_bump, control_angular_velocity)
+            self.set_velocity(self.throttle_Kp * delta_distance + self.throttle_bump, control_angular_velocity)
+        return False
 
     def init_joystick_subscriber(self):
         def _joystick_callback(data):
@@ -120,7 +128,8 @@ class Shifty(object):
                     [np.cos(self.pose_theta), -np.sin(self.pose_theta)],
                     [np.sin(self.pose_theta), np.cos(self.pose_theta)]
                 ])
-                self.goals = np.array([self.pose_x, self.pose_y]) + np.matmul(rotation_matrix, self.goals)
+                rospy.loginfo('goals:%s    rot:%s', self.goals, rotation_matrix)
+                self.goals = np.array([self.pose_x, self.pose_y]) + rotation_matrix.dot(self.goals.T).T
                 rospy.loginfo('Setting new goals %s', self.goals)
 
         rospy.Subscriber("/odom", Odometry, _odom_callback)

@@ -15,7 +15,7 @@ from std_msgs.msg import String
 from tf.transformations import euler_from_quaternion
 
 
-class Shifty(object):
+class Mapper(object):
     def __init__(self):
         rospy.init_node('mapper', anonymous=True, log_level=rospy.DEBUG)
         self.dt = 1
@@ -34,8 +34,8 @@ class Shifty(object):
         self.init_range_subscriber()
 
         self.id = str(random.randint(0, 9999)).ljust(3, '0')
-        self.data_file_name = os.path.join(os.path.abspath(__file__), 'data_{0}.log'.format(self.id))
-        self.html_file_name = os.path.join(os.path.abspath(__file__), 'graph_{0}.html'.format(self.id))
+        self.data_file_name = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data_{0}.log'.format(self.id))
+        self.html_file_name = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'graph_{0}.html'.format(self.id))
 
     def run(self):
         rospy.loginfo('Running Mapper Loop ...')
@@ -57,12 +57,13 @@ class Shifty(object):
                 'linear_velocity': self.linear_velocity,
                 'angular_velocity': self.angular_velocity,
                 'walls': self.get_wall()
-            }))
+            }) + '\n')
 
     def build_html(self):
         with open(self.data_file_name, 'r') as data_file:
             data = []
             for line in data_file.readlines():
+                print(line)
                 data.append(json.loads(line))
                 assert 'datetime' in data[-1].keys()
                 assert 'x' in data[-1].keys()
@@ -104,17 +105,17 @@ class Shifty(object):
     ctx.moveTo(500, 500);
     for (var i = 0; i < {3}; i++) {{
         ctx.strokeStyle = 'black';
-        ctx.lineTo(500 + (xs[i] * 50), 500 + (ys[i] * 50));
+        ctx.lineTo(500 + (xs[i] * 100), 500 - (ys[i] * 100));
         ctx.stroke();
         if (i + 1 === {3}) {{
             ctx.fillStyle = 'green';
-            ctx.fillRect(500 + (xs[i] * 50), 500 + (ys[i] * 50), 4, 4);
+            ctx.fillRect(500 + (xs[i] * 100), 500 - (ys[i] * 100), 4, 4);
         }}
     }}
 
     for (var j = 0; j < {4}; j++) {{
         ctx.fillStyle = 'blue';
-        ctx.fillRect(500 + (wxs[j] * 50), 500 + (wys[j] * 50), 4, 4);
+        ctx.fillRect(500 + (wxs[j] * 100), 500 - (wys[j] * 100), 4, 4);
     }}
     </script>
 </html>'''.format(
@@ -149,16 +150,6 @@ class Shifty(object):
                 data.pose.pose.orientation.z,
                 data.pose.pose.orientation.w,
             ])[2]
-
-            if not self.is_global_pose_set:
-                self.is_global_pose_set = True
-                # translate and rotate
-                rotation_matrix = np.array([
-                    [np.cos(self.pose_theta), -np.sin(self.pose_theta)],
-                    [np.sin(self.pose_theta), np.cos(self.pose_theta)]
-                ])
-                self.goals = np.array([self.pose_x, self.pose_y]) + np.matmul(rotation_matrix, self.goals)
-                rospy.loginfo('Setting new goals %s', self.goals)
 
         rospy.Subscriber("/odom", Odometry, _odom_callback)
 
@@ -199,4 +190,4 @@ class Shifty(object):
 
 
 if __name__ == "__main__":
-    Shifty().run()
+    Mapper().run()
