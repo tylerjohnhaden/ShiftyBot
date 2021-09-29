@@ -4,4 +4,5 @@
     </node>
 
     <node name="shifty_node" pkg="lab2" type="shifty0.py" output="screen"/>
+    <node name="mapper_node" pkg="lab2" type="mapper.py" output="screen"/>
 </launch>

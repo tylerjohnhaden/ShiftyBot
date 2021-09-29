@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Shifty test</title>
+</head>
+<body>
+    <canvas id="graph" width="1000" height="1000"></canvas>
+</body>
+<script>
+    var xs = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.6, 0.6, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0];
+    var ys = [0, 0, 0, 0, 0, 0, 0.1, 0.2, 0.3, 0.4, 0.4, 0.3, 0.2, 0.1, 0, -0.1];
+    var wxs = [3, 4, 5];
+    var wys = [3, 4, 5];
+
+    var c = document.getElementById("graph");
+    var ctx = c.getContext("2d");
+    ctx.moveTo(500, 500);
+    for (var i = 0; i < 16; i++) {
+        ctx.strokeStyle = 'black';
+        ctx.lineTo(500 + (xs[i] * 50), 500 + (ys[i] * 50));
+        ctx.stroke();
+        if (i + 1 === 16) {
+            ctx.fillStyle = 'green';
+            ctx.fillRect(500 + (xs[i] * 50), 500 + (ys[i] * 50), 4, 4);
+        }
+    }
+
+    for (var j = 0; j < 3; j++) {
+        ctx.fillStyle = 'blue';
+        ctx.fillRect(500 + (wxs[j] * 50), 500 + (wys[j] * 50), 4, 4);
+    }
+    </script>
+</html>
