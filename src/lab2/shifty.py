@@ -12,22 +12,36 @@ from nav_msgs.msg import Odometry
 from std_msgs.msg import String
 from tf.transformations import euler_from_quaternion
 
-rospy.loginfo('here!')
 
+def fix_angle(e):
+    return np.arctan2(np.sin(e), np.cos(e))
 
 class Shifty(object):
     def __init__(self):
         # Part specific constants
-        self.goal_x = -1.5
-        self.goal_y = 1.5
+        # self.goals = np.array([[1.5, 1.5], [1.5, -1.5], [-1.5, -1.5], [-1.5, 1.5]])
+        self.goals = np.array([
+            [2, 0],
+            [-1.5, -1.5],
+            [0, 2],
+            [0, -2],
+            [-1.5, 1.5]
+        ])
+        # self.goals = np.array([[.5, .5], [.5, -.5], [-.5, -.5], [-.5, .5]])
         self.goal_radius = 0.1
-        self.throttle_bump = 0
-        self.steering_Kp = .9
+        ##self.throttle_bump = 0.01
+        ##self.steering_Kp = .6
+        ##self.throttle_Kp = .1
+        ##self.safety_range = 0.34
+
+        self.throttle_bump = 0.03
+        self.steering_Kp = .99
+        self.throttle_Kp = .2
         self.safety_range = 0.34
 
         # Bot + heatbeat
-        rospy.init_node('shifty', anonymous=True, log_level=rospy.DEBUG)
-        self.dt = .1  # todo: calibrate, try .01
+        rospy.init_node('shifty', anonymous=True, log_level=rospy.INFO)
+        self.dt = .01  # todo: calibrate, try .01
         self.hz = int(1 / self.dt)
         self.rate = rospy.Rate(self.hz)
 
@@ -37,9 +51,6 @@ class Shifty(object):
         self.init_joystick_subscriber()
 
         self.is_global_pose_set = False
-        self.global_offset_x = None
-        self.global_offset_y = None
-        self.global_offset_theta = None
         self.pose_x = 0
         self.pose_y = 0
         self.pose_theta = 0
@@ -51,65 +62,58 @@ class Shifty(object):
         self.range_sliding_window = [0 for _ in range(self.range_memory_depth)]
         self.init_range_subscriber()
 
-        self.velocity_low_pass = 0.001
-        self.velocity_high_pass = 0.3
-        self.angular_velocity_high_pass = 2
+        self.max_linear_velocity = 0.6
+        self.max_angular_velocity = 3
         self.vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
-
-        self.file_step()
 
     def run(self):
         rospy.loginfo('Running Control Loop ...')
-        # allow state variables to populate from subscribers
-        rospy.sleep(0.5)
-        self._control_loop()
-
-    def _control_loop(self):
         while not rospy.is_shutdown():
-            self.step()
-            self.rate.sleep()
+            for i in range(len(self.goals)):
+                at_goal = self.step(i)
+                self.rate.sleep()
+                while not at_goal:
+                    at_goal = self.step(i)
+                    self.rate.sleep()
 
-    def step(self):
+    def step(self, goal_index):
+        if not self.is_global_pose_set:
+            # We don't know the global coordinates yet
+            self.set_velocity(0, 0)
+            return False
+
         if min(self.range_sliding_window) < self.safety_range * (self.linear_velocity / 0.3):
             # Robot is within range of obstacle, pause run
             self.set_velocity(0, 0)
-            return
+            return False
 
         if any(self.joystick_buttons):
             # Joystick button is pressed, pause run
             self.set_velocity(0, 0)
-            return
+            return False
 
-        x_diff = self.goal_x - self.pose_x
-        y_diff = self.goal_y - self.pose_y
-        distance_from_goal = np.sqrt((x_diff ** 2) + (y_diff ** 2))
-        rospy.loginfo('Goal = %s, xy_diff = (%s, %s)', distance_from_goal, x_diff, y_diff)
+        goal = self.goals[goal_index]
+        delta = goal - np.array([self.pose_x, self.pose_y])
+        delta_distance = distance = np.sqrt(sum(np.square(delta)))
+        delta_theta = np.arctan2(delta[1], delta[0])  # range (-pi, pi)
+        control_angular_velocity = self.steering_Kp * fix_angle(delta_theta - self.pose_theta)
 
-        if distance_from_goal < self.goal_radius:
+        rospy.loginfo(
+            'Goal(%s)    Diff(%s)    Theta(%s)    Turn(%s)',
+            delta_distance, delta, delta_theta, control_angular_velocity
+        )
+
+        if delta_distance < self.goal_radius:
             # Robot has reached the gaol, pause run
             self.set_velocity(0, 0)
-            return
-
-        theta_d = np.arctan(y_diff / x_diff)
-        steering = self.steering_Kp * self.fix_angle(theta_d - self.pose_theta - np.pi)
-
-        rospy.loginfo('Robot Theta = %s, Theta_d = %s, Steering = %s', self.pose_theta, theta_d, steering)
+            return True
 
         # self.set_velocity(distance_from_goal + self.throttle_bump, steering)
-        if abs(steering) > .1:
-		    self.set_velocity(0, steering)
+        if False and abs(control_angular_velocity) > .1:
+            self.set_velocity(0, control_angular_velocity)
         else:
-            self.set_velocity(distance_from_goal + self.throttle_bump, steering)
-
-    def _file_listener_loop(self):
-        while not rospy.is_shutdown():
-            for _ in range(self.hz):
-                self.rate.sleep()
-            self.file_step()
-
-    def file_step(self):
-        rospy.loginfo(os.getcwd())
-        # with open('command.json', 'r') as command_file:
+            self.set_velocity(self.throttle_Kp * delta_distance + self.throttle_bump, control_angular_velocity)
+        return False
 
     def init_joystick_subscriber(self):
         def _joystick_callback(data):
@@ -120,34 +124,27 @@ class Shifty(object):
 
     def init_odom_subscriber(self):
         def _odom_callback(data):
-            if not self.is_global_pose_set:
-                self.is_global_pose_set = True
-                self.global_offset_x = data.pose.pose.position.x
-                self.global_offset_y = data.pose.pose.position.y
-                self.global_offset_theta = euler_from_quaternion([
-                    data.pose.pose.orientation.x,
-                    data.pose.pose.orientation.y,
-                    data.pose.pose.orientation.z,
-                    data.pose.pose.orientation.w,
-                ])[2]
-
-                rospy.loginfo(
-                    'Setting global offsets x = %s, y = %s, theta = %s',
-                    self.global_offset_x,
-                    self.global_offset_y,
-                    self.global_offset_theta
-                )
-
             self.linear_velocity = data.twist.twist.linear.x
             self.angular_velocity = data.twist.twist.angular.z
-            self.pose_x = data.pose.pose.position.x - self.global_offset_x
-            self.pose_y = data.pose.pose.position.y - self.global_offset_y
-            self.pose_theta = self.fix_angle(euler_from_quaternion([
+            self.pose_x = data.pose.pose.position.x
+            self.pose_y = data.pose.pose.position.y
+            self.pose_theta = euler_from_quaternion([
                 data.pose.pose.orientation.x,
                 data.pose.pose.orientation.y,
                 data.pose.pose.orientation.z,
                 data.pose.pose.orientation.w,
-            ])[2] - self.global_offset_theta)
+            ])[2]
+
+            if not self.is_global_pose_set:
+                self.is_global_pose_set = True
+                # translate and rotate
+                rotation_matrix = np.array([
+                    [np.cos(self.pose_theta), -np.sin(self.pose_theta)],
+                    [np.sin(self.pose_theta), np.cos(self.pose_theta)]
+                ])
+                rospy.loginfo('goals:%s    rot:%s', self.goals, rotation_matrix)
+                self.goals = np.array([self.pose_x, self.pose_y]) + rotation_matrix.dot(self.goals.T).T
+                rospy.loginfo('Setting new goals %s', self.goals)
 
         rospy.Subscriber("/odom", Odometry, _odom_callback)
 
@@ -163,28 +160,25 @@ class Shifty(object):
             rospy.Subscriber('/range/{0}'.format(corner), Range, _range_callback)
 
     def set_velocity(self, target_linear_velocity=0, target_angular_velocity=0):
-        if abs(target_linear_velocity) < self.velocity_low_pass:
+        if abs(target_linear_velocity) < 0.01:
             target_linear_velocity = 0
-        if abs(target_angular_velocity) < self.velocity_low_pass:
+        if abs(target_angular_velocity) < 0.001:
             target_angular_velocity = 0
 
-        if target_linear_velocity > self.velocity_high_pass:
-            target_linear_velocity = self.velocity_high_pass
-        if target_linear_velocity < -self.velocity_high_pass:
-            target_linear_velocity = -self.velocity_high_pass
+        if target_linear_velocity > 0:
+            target_linear_velocity = min(target_linear_velocity, self.max_linear_velocity)
+        else:
+            target_linear_velocity = max(target_linear_velocity, -self.max_linear_velocity)
 
-        if target_angular_velocity > self.angular_velocity_high_pass:
-            target_angular_velocity = self.angular_velocity_high_pass
-        if target_angular_velocity < -self.angular_velocity_high_pass:
-            target_angular_velocity = -self.angular_velocity_high_pass
+        if target_angular_velocity > 0:
+            target_angular_velocity = min(target_angular_velocity, self.max_angular_velocity)
+        else:
+            target_angular_velocity = max(target_angular_velocity, -self.max_angular_velocity)
 
         vel = Twist()
         vel.linear.x = target_linear_velocity
         vel.angular.z = target_angular_velocity
         self.vel_pub.publish(vel)
-
-    def fix_angle(self, e):
-        return np.arctan2(np.sin(e), np.cos(e))
 
 
 if __name__ == "__main__":

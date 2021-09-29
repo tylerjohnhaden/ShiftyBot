@@ -1,4 +1,4 @@
-// example: {'goal_id': '8asb89ash98f7', 'points': [[1.5, 1.5], [-1.5, 1.5], [-1.5, -1.5], [1.5, -1.5]]},
+// example: {'goal_id': '8asb89ash98f7', 'points': [[1.5, 1.5], [-1.5, 1.5], [-1.5, -1.5], [1.5, -1.5]], 'radius': 0.1},
 const goals = [
 {goal_rows}
 ];
