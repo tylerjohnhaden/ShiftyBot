@@ -17,10 +17,22 @@ class Shifty(object):
     def __init__(self):
         # Part specific constants
         #self.goals = np.array([[1.5, 1.5], [1.5, -1.5], [-1.5, -1.5], [-1.5, 1.5]])
-        self.goals = np.array([[.5, .5], [.5, -.5], [-.5, -.5], [-.5, .5]])
+        self.goals = np.array([
+            [2, 0],
+            [-1.5, -1.5],
+            [0, 2],
+            [0, -2],
+            [-1.5, 1.5]
+        ])
+        # self.goals = np.array([[.5, .5], [.5, -.5], [-.5, -.5], [-.5, .5]])
         self.goal_radius = 0.1
-        self.throttle_bump = 0.01
-        self.steering_Kp = .6
+        ##self.throttle_bump = 0.01
+        ##self.steering_Kp = .6
+        ##self.throttle_Kp = .1
+        ##self.safety_range = 0.34
+
+        self.throttle_bump = 0.03
+        self.steering_Kp = .99
         self.throttle_Kp = .2
         self.safety_range = 0.34
 
@@ -48,7 +60,7 @@ class Shifty(object):
         self.init_range_subscriber()
 
         self.max_linear_velocity = 0.6
-        self.max_angular_velocity = 1
+        self.max_angular_velocity = 3
         self.vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 
     def run(self):

@@ -3,6 +3,7 @@
         <param name="dev" type="string" value="/dev/input/js0" />
         <!-- <param name="deadzone" value="0.12" /> -->
     </node>
-
     <node name="shifty_node" pkg="lab1" type="shifty.py"/>
+    <node name="mapper_node" pkg="lab1" type="mapper9.py"/>
+
 </launch>

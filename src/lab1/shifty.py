@@ -47,10 +47,10 @@ class Shifty:
         self.auto_velocity_selection = 0
         self.auto_spin_counter = 0
         self.auto_spin_direction = 1
-        self.auto_spin_mean_duration = 3  # seconds
+        self.auto_spin_mean_duration = 1  # seconds
         self.auto_spin_stddev_duration = 1  # seconds
 
-        self.dt = .1  # todo: calibrate, try .01
+        self.dt = .01  # todo: calibrate, try .01
         self.hz = int(1 / self.dt)
         self.rate = rospy.Rate(self.hz)
         self.pid_vel_previous_error = 0
@@ -62,9 +62,9 @@ class Shifty:
         self.init_odom_subscriber()
 
         self.min_range = .2  # 0.2 meters
-        self.range_scale = 1.7  # calibrated for the above value
+        self.range_scale = 2  # calibrated for the above value
         self.range_threshold = 5
-        self.current_range_sliding_window = [0 for _ in range(10)]
+        self.current_range_sliding_window = [0 for _ in range(100)]
         self.init_range_subscriber()
 
         self.cruise_control = True
@@ -94,7 +94,7 @@ class Shifty:
                 self.auto_spin_mean_duration * self.hz,
                 self.auto_spin_stddev_duration * self.hz
             ))
-            self.auto_spin_direction = (random.randint(0, 1) * 2) - 1
+            self.auto_spin_direction = -1  # (random.randint(0, 1) * 2) - 1
             return
 
         if self.auto_spin_counter > 0:
