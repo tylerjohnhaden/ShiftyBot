@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 
-from multiprocessing import Process
 import random
 import os
-import datetime
+import time
 import json
 
 import numpy as np
@@ -15,9 +14,9 @@ from std_msgs.msg import String
 from tf.transformations import euler_from_quaternion
 
 
-class Shifty(object):
+class Mapper(object):
     def __init__(self):
-        rospy.init_node('mapper', anonymous=True, log_level=rospy.DEBUG)
+        rospy.init_node('mapper', anonymous=True, log_level=rospy.INFO)
         self.dt = 1
         self.hz = int(1 / self.dt)
         self.rate = rospy.Rate(self.hz)
@@ -50,10 +49,10 @@ class Shifty(object):
     def step(self):
         with open(self.data_file_name, 'a') as data_file:
             data_file.write(json.dumps({
-                'datetime': str(datetime.datetime.now()),
+                'time': time.time(),
                 'x': self.pose_x,
                 'y': self.pose_y,
-                'theta': self.pose_theta,
+                't': self.pose_theta,
                 'linear_velocity': self.linear_velocity,
                 'angular_velocity': self.angular_velocity,
                 'walls': self.get_wall()
@@ -84,48 +83,7 @@ class Shifty(object):
                 walls.extend(d['walls'])
 
             with open(self.html_file_name, 'w') as html_file:
-                html_file.write('''<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Shifty {0}</title>
-</head>
-<body>
-    <canvas id="graph" width="1000" height="1000"></canvas>
-</body>
-<script>
-    var xs = {1};
-    var ys = {2};
-    var wxs = {5};
-    var wys = {6};
-
-    var c = document.getElementById("graph");
-    var ctx = c.getContext("2d");
-    ctx.moveTo(500, 500);
-    for (var i = 0; i < {3}; i++) {{
-        ctx.strokeStyle = 'black';
-        ctx.lineTo(500 + (xs[i] * 50), 500 + (ys[i] * 50));
-        ctx.stroke();
-        if (i + 1 === {3}) {{
-            ctx.fillStyle = 'green';
-            ctx.fillRect(500 + (xs[i] * 50), 500 + (ys[i] * 50), 4, 4);
-        }}
-    }}
-
-    for (var j = 0; j < {4}; j++) {{
-        ctx.fillStyle = 'blue';
-        ctx.fillRect(500 + (wxs[j] * 50), 500 + (wys[j] * 50), 4, 4);
-    }}
-    </script>
-</html>'''.format(
-                    self.id,
-                    [d['x'] for d in data],
-                    [d['y'] for d in data],
-                    len(data),
-                    len(walls),
-                    [w[0] for w in walls],
-                    [w[1] for w in walls]
-                ))
+                html_file.write()
 
     def get_wall(self):
         in_range_measurements = [m for m in self.range_sliding_window if m < 1]
@@ -199,4 +157,4 @@ class Shifty(object):
 
 
 if __name__ == "__main__":
-    Shifty().run()
+    Mapper().run()
