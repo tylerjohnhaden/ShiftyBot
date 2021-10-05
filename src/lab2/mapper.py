@@ -33,8 +33,9 @@ class Mapper(object):
         self.init_range_subscriber()
 
         self.id = str(random.randint(0, 9999)).ljust(3, '0')
-        self.data_file_name = os.path.join(os.path.abspath(__file__), 'data_{0}.log'.format(self.id))
-        self.html_file_name = os.path.join(os.path.abspath(__file__), 'graph_{0}.html'.format(self.id))
+        self.data_template_file_name = os.path.join(os.path.abspath(__file__), 'site', 'data.js.template')
+        self.data_js_file_name = os.path.join(os.path.abspath(__file__), 'site', 'data.js')
+        self.data_log_file_name = os.path.join(os.path.abspath(__file__), 'data.log')
 
     def run(self):
         rospy.loginfo('Running Mapper Loop ...')
@@ -47,7 +48,7 @@ class Mapper(object):
             i += 1
 
     def step(self):
-        with open(self.data_file_name, 'a') as data_file:
+        with open(self.data_log_file_name, 'a') as data_file:
             data_file.write(json.dumps({
                 'time': time.time(),
                 'x': self.pose_x,
@@ -59,31 +60,28 @@ class Mapper(object):
             }))
 
     def build_html(self):
-        with open(self.data_file_name, 'r') as data_file:
+        with open(self.data_log_file_name, 'r') as data_file:
             data = []
             for line in data_file.readlines():
                 data.append(json.loads(line))
-                assert 'datetime' in data[-1].keys()
+                assert 'time' in data[-1].keys()
                 assert 'x' in data[-1].keys()
                 assert 'y' in data[-1].keys()
-                assert 'theta' in data[-1].keys()
+                assert 't' in data[-1].keys()
                 assert 'linear_velocity' in data[-1].keys()
                 assert 'angular_velocity' in data[-1].keys()
                 assert 'walls' in data[-1].keys()
-
-            lowest_x = min(d['x'] for d in data)
-            lowest_y = min(d['y'] for d in data)
-            highest_x = max(d['x'] for d in data)
-            highest_y = max(d['y'] for d in data)
-            height = highest_x - lowest_x
-            width = highest_y - lowest_y
 
             walls = []
             for d in data:
                 walls.extend(d['walls'])
 
-            with open(self.html_file_name, 'w') as html_file:
-                html_file.write()
+            with open(self.data_template_file_name, 'r') as template_file:
+                with open(self.data_js_file_name, 'w') as datajs_file:
+                    datajs_file.write(template_file.read().format(
+                        goal_rows=[],
+                        tracking_rows=data,
+                    ))
 
     def get_wall(self):
         in_range_measurements = [m for m in self.range_sliding_window if m < 1]
@@ -130,30 +128,6 @@ class Mapper(object):
                 rospy.logwarn('Triggering init_range_subscriber with incorrect corner designation')
                 continue
             rospy.Subscriber('/range/{0}'.format(corner), Range, _range_callback)
-
-    def set_velocity(self, target_linear_velocity=0, target_angular_velocity=0):
-        if abs(target_linear_velocity) < 0.01:
-            target_linear_velocity = 0
-        if abs(target_angular_velocity) < 0.001:
-            target_angular_velocity = 0
-
-        if target_linear_velocity > 0:
-            target_linear_velocity = min(target_linear_velocity, self.max_linear_velocity)
-        else:
-            target_linear_velocity = max(target_linear_velocity, -self.max_linear_velocity)
-
-        if target_angular_velocity > 0:
-            target_angular_velocity = min(target_angular_velocity, self.max_angular_velocity)
-        else:
-            target_angular_velocity = max(target_angular_velocity, -self.max_angular_velocity)
-
-        vel = Twist()
-        vel.linear.x = target_linear_velocity
-        vel.angular.z = target_angular_velocity
-        self.vel_pub.publish(vel)
-
-    def fix_angle(self, e):
-        return np.arctan2(np.sin(e), np.cos(e))
 
 
 if __name__ == "__main__":
