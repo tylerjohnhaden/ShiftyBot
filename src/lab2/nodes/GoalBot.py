@@ -1,6 +1,6 @@
 """A Goal Oriented Bot
 
-Allow setting of rich goal instructions. This goal data object is identifiable and static, allowing us to publish
+Allow setting of rich goal instructions. This "goal data object" is identifiable and static, allowing us to publish
 to other nodes. This publish step occurs right at the end of a run and right at the beginning. This way any
 subscribers have two opportunities to hear unique goal. It is also recommended that the goal data is published
 at every waypoint.
@@ -15,12 +15,22 @@ import numpy as np
 import rospy
 from std_msgs.msg import String
 
-from .OdomBot import OdomBot
+from . import OdomBot, ReversibleBot, fix_angle
 
 
-class GoalBot(OdomBot):
-    def __init__(self):
-        super().__init__()
+class GoalBot(OdomBot, ReversibleBot):
+    goal_headers = [
+        'goal_id',
+        'goal_waypoints',
+        'goal_waypoint_behavior',
+        'goal_throttle_behavior',
+        'goal_end_behavior',
+        'goal_radius',
+        'goal_transformation',
+    ]
+
+    def __init__(self, name='odom-bot'):
+        super().__init__(name)
 
         self._goal_id_length = 8
         self.goal_id = self.generate_goal_id()
@@ -56,10 +66,13 @@ class GoalBot(OdomBot):
         delta_theta = np.arctan2(delta[1], delta[0])  # (-pi, pi)
         delta_distance = np.sqrt(sum(np.square(delta)))  # [0, +inf)
 
-        return delta[0], delta[1], delta_theta, delta_distance
+        if not self.forward_direction:
+            delta_theta = fix_angle(delta_theta + np.pi)
+
+        return delta_theta, delta_distance
 
     def publish_current_goal(self):
-        self.goal_pub.publish('{0},{1},{2},{3},{4},{5},{6}'.format(
+        self.goal_pub.publish(','.join([
             self.goal_id,
             self.goal_waypoints,
             self.goal_waypoint_behavior,
@@ -67,7 +80,7 @@ class GoalBot(OdomBot):
             self.goal_end_behavior,
             self.goal_radius,
             self.goal_transformation
-        ))
+        ]))
 
     def set_goal(
             self,
@@ -83,11 +96,11 @@ class GoalBot(OdomBot):
         if waypoint_behavior not in ['stop and turn', 'maintain speed']:
             rospy.logwarn('unrecognized waypoint behavior: %s', waypoint_behavior)
             return
-        if throttle_behavior not in ['constant pid', 'distance + bump']:
+        if throttle_behavior not in ['cruise control', 'distance + bump']:
             rospy.logwarn('unrecognized throttle behavior: %s', throttle_behavior)
             return
         if end_behavior not in ['exit', 'loop']:
-            rospy.logwarn('unrecognized throttle behavior: %s', throttle_behavior)
+            rospy.logwarn('unrecognized end behavior: %s', end_behavior)
             return
         if radius < 0.001:
             rospy.logwarn('attempting to set goal point too small: %s', radius)

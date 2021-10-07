@@ -7,51 +7,30 @@ Here should be the implementation of the step method, now that we have all state
 """
 
 import numpy as np
-import rospy
 
-from . import JoystickBot, RangeBot, GoalBot, VelocityBot
-
-
-def fix_angle(e):
-    return np.arctan2(np.sin(e), np.cos(e))
+from . import JoystickBot, VelocityBot, TrackedBot, fix_angle
 
 
-class ShiftyBot(JoystickBot, RangeBot, GoalBot, VelocityBot):
-    def __init__(self):
-        super().__init__()
+class ShiftyBot(JoystickBot, VelocityBot, TrackedBot):
+    def __init__(self, name='shifty-bot'):
+        super().__init__(name)
 
         # Control Constants
         self.throttle_pid_setpoint = 0.5
         self.throttle_bump = 0.03
-        self.steering_Kp = .99
-        self.throttle_Kp = .2
-        self.obstacle_safety_range = 0.34
+        self.steering_kp = .99
+        self.throttle_kp = .2
 
         # State Machine and Controllers
         self.throttle_pid_previous_error = 0
         self.throttle_pid_integral = 0
 
         self.obstacle_wait_time = 2  # seconds
-        self.state_obstacle_counter = 0
-
         self.stop_wait_time = 1  # seconds
+
+        self.state_obstacle_counter = 0
         self.state_stop_counter = 0
-
-        self.state_turn_flag = True
-
-    def set_control_constants(
-            self,
-            steering_Kp=.99,
-            throttle_Kp=.2,
-            throttle_bump=0.03,
-            throttle_pid_setpoint=0.5,
-            obstacle_safety_range=0.4
-    ):
-        self.steering_Kp = steering_Kp
-        self.throttle_Kp = throttle_Kp
-        self.throttle_bump = throttle_bump
-        self.throttle_pid_setpoint = throttle_pid_setpoint
-        self.obstacle_safety_range = obstacle_safety_range
+        self.state_turning = True
 
     def step(self):
         # We don't know the global coordinates yet, wait for first odom reading
@@ -79,43 +58,50 @@ class ShiftyBot(JoystickBot, RangeBot, GoalBot, VelocityBot):
             self.state_stop_counter -= 1
             return
 
-        next_waypoint = self.goal_waypoints[self.goal_point]
-        delta = next_waypoint - np.array([self.pose_x, self.pose_y])
-        delta_distance = np.sqrt(sum(np.square(delta)))
-        control_linear_velocity = (self.throttle_Kp * delta_distance) + self.throttle_bump
+        delta_t, delta_r = self.get_current_goal_delta()
 
-        if delta_distance < self.goal_radius:
-            self.set_velocity(0, 0)
-            self.state_stop_counter = int(self.stop_wait_time * self.hz)
-            self.state_turn_flag = True
+        # We just reached the waypoint, handle transition to next one
+        if delta_r < self.goal_radius and not self.state_turning:
+            if self.goal_end_behavior == 'exit' and self.goal_point == len(self.goal_waypoints) - 1:
+                self.set_velocity(0, 0)
+                self.exit()
+                return
+
+            if self.goal_waypoint_behavior == 'stop and turn':
+                self.set_velocity(0, 0)
+                self.state_stop_counter = int(self.stop_wait_time * self.hz)
+                self.state_turning = True
+
+                if abs(delta_t) > (np.pi / 2):
+                    self.set_reverse_direction()
+
             self.goal_index += 1
             self.goal_point = (self.goal_point + 1) % len(self.goal_waypoints)
+            self.publish_current_goal()
             return
 
-        delta_theta = np.arctan2(delta[1], delta[0])  # range (-pi, pi)
-        control_angular_velocity = self.steering_Kp * fix_angle(delta_theta - self.pose_t)
+        angular_twist = self.steering_kp * fix_angle(delta_t - self.pose_t)
+        if self.state_turning:
+            self.set_velocity(0, angular_twist)
+            return
 
-        # todo: if self.state_turn_flag and abs(delta_theta) > 0.05:
-        #     self.set_velocity(0, control_angular_velocity)
-        # elif
-        #
-        #
-        #
-        #
-
-        rospy.loginfo(
-            'Goal(%s)    Diff(%s)    Theta(%s)    Turn(%s)',
-            delta_distance, delta, delta_theta, control_angular_velocity
-        )
-
-        if delta_distance < self.goal_radius:
-            # Robot has reached the gaol, pause run
-            self.set_velocity(0, 0)
-            return True
-
-        # self.set_velocity(distance_from_goal + self.throttle_bump, steering)
-        if False and abs(control_angular_velocity) > .1:
-            self.set_velocity(0, control_angular_velocity)
+        if self.goal_throttle_behavior == 'cruise control':
+            linear_twist = self.throttle_pid_setpoint + self.throttle_pid_step(self.throttle_pid_setpoint)
         else:
-            self.set_velocity(self.throttle_Kp * delta_distance + self.throttle_bump, control_angular_velocity)
-        return False
+            linear_twist = (self.throttle_kp * delta_r) + self.throttle_bump
+
+        self.set_velocity(linear_twist, angular_twist)
+
+    def set_control_constants(
+            self,
+            steering_kp,
+            throttle_kp,
+            throttle_bump,
+            throttle_pid_setpoint,
+            obstacle_safety_range
+    ):
+        self.steering_kp = steering_kp
+        self.throttle_kp = throttle_kp
+        self.throttle_bump = throttle_bump
+        self.throttle_pid_setpoint = throttle_pid_setpoint
+        self.obstacle_safety_range = obstacle_safety_range

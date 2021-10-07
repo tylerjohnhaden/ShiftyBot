@@ -1,9 +1,9 @@
-// example: {'goal_id': '8asb89ash98f7', 'points': [[1.5, 1.5], [-1.5, 1.5], [-1.5, -1.5], [1.5, -1.5]]},
+// auto generated
+
 const goals = [
-    {'goal_id': '0', 'points': [[2, 0], [-2, -2], [0, 2], [0, -2], [-2, 2]]},
+    {'goal_id': '0', 'goal_waypoints': [[2, 0], [-2, -2], [0, 2], [0, -2], [-2, 2]], 'goal_radius': 0.1},
 ];
 
-// example: {'time': 29837465, 'goal_id': '8asb89ash98f7', 'goal_index': 0, 'goal_point': 0, 'x': 0, 'y': 0, 't': 0, 'walls': []},
 const tracking = [
     {'goal_id': '0', 'x': 0, 'y': 0},
     {'goal_id': '0', 'x': 0.00010047571469322348, 'y': -1.6860032933169752e-05},

@@ -10,12 +10,12 @@ import rospy
 from std_msgs.msg import Empty
 from tf.transformations import euler_from_quaternion
 
-from .Bot import Bot
+from . import MetricBot
 
 
-class OdomBot(Bot):
-    def __init__(self):
-        super().__init__()
+class OdomBot(MetricBot):
+    def __init__(self, name='odom-bot'):
+        super().__init__(name)
 
         self.is_global_pose_set = False
         self.global_pose_x = 0
@@ -56,6 +56,8 @@ class OdomBot(Bot):
                     self.pose_y,
                     self.pose_t
                 )
+
+            self.log_event('odom')
 
         rospy.Subscriber("/odom", Odometry, _odom_callback)
 

@@ -8,29 +8,33 @@ Obstacle detection depends on current velocity, so we inherit from OdomBot.
 import rospy
 from sensor_msgs.msg import Range
 
-from .OdomBot import OdomBot
+from . import OdomBot, ReversibleBot
 
 
-class RangeBot(OdomBot):
-    def __init__(self):
-        super().__init__()
+class RangeBot(OdomBot, ReversibleBot):
+    def __init__(self, name='range-bot'):
+        super().__init__(name)
 
-        self.range_corners = ['fl', 'fr']
         self.range_memory_depth = 10
-        self.range_sliding_window = [0 for _ in range(self.range_memory_depth)]
+        self.range_sliding_window = {d: [0 for _ in range(self.range_memory_depth)] for d in ['forward', 'backward']}
 
         self.obstacle_safety_range = 0.34
-        self.obstacle_velocity_multiplier =  3
+        self.obstacle_velocity_multiplier = 3
 
-        def _range_callback(data):
-            self.range_sliding_window.pop(0)
-            self.range_sliding_window.append(data.range)
+        def _forward_range_callback(data):
+            self.range_sliding_window['forward'].pop(0)
+            self.range_sliding_window['forward'].append(data.range)
+            self.log_event('range-forward')
 
-        for corner in self.range_corners:
-            if corner not in ['fl', 'fr', 'rl', 'rr']:
-                rospy.logwarn('Triggering init_range_subscriber with incorrect corner designation')
-                continue
-            rospy.Subscriber('/range/{0}'.format(corner), Range, _range_callback)
+        def _backward_range_callback(data):
+            self.range_sliding_window['backward'].pop(0)
+            self.range_sliding_window['backward'].append(data.range)
+            self.log_event('range-backward')
+
+        rospy.Subscriber('/range/fl', Range, _forward_range_callback)
+        rospy.Subscriber('/range/fr', Range, _forward_range_callback)
+        rospy.Subscriber('/range/rl', Range, _backward_range_callback)
+        rospy.Subscriber('/range/rr', Range, _backward_range_callback)
 
     def sees_obstacle(self):
         """Calculate obstacle distance for safety
@@ -44,4 +48,4 @@ class RangeBot(OdomBot):
             0.5 < 0.61 == Yes
         """
         threshold = self.obstacle_safety_range * self.linear_velocity * self.obstacle_velocity_multiplier
-        return min(self.range_sliding_window) < threshold
+        return min(self.range_sliding_window['forward' if self.forward_direction else 'backward']) < threshold
