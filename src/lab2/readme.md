@@ -6,7 +6,7 @@
 | waypoint_behavior | `stop and turn` or `maintain speed` | `stop and turn` |
 | throttle_behavior | `cruise control` or `distance + bump` | `cruise control` |
 | end_behavior | `exit` or `loop` | `exit` |
-| radius | float (meters) | `0.05` |
+| radius | float greater than `0.001` (meters) | `0.05` |
 | transformation | `relative` or `global` | `relative` |
 | reversible | bool | `False` |
 

@@ -10,7 +10,7 @@ reaches the goal. Use odom to confirm that it moves to the
 desired goal (use rqt plot to visualize data)
 """
 
-from .nodes import ShiftyBot
+from ..nodes import ShiftyBot
 
 if __name__ == '__main__':
     shifty = ShiftyBot()

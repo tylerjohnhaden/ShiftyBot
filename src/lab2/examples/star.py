@@ -26,6 +26,7 @@ if __name__ == '__main__':
         [star_points[i] for i in [0, 2, 4, 1, 3]],
         waypoint_behavior='stop and turn',
         throttle_behavior='constant pid',
-        end_behavior='loop'
+        end_behavior='loop',
+        reversible=True
     )
     shifty.run()

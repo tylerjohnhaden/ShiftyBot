@@ -8,7 +8,7 @@ Implement: i) “stop, turn, and go” behavior and ii) smooth
 constant linear velocity through the points.
 """
 
-from .nodes.ShiftyBot import ShiftyBot
+from ..nodes import ShiftyBot
 
 square_width = .75
 part3_behavior = 'i'

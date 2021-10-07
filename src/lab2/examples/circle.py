@@ -8,7 +8,7 @@ Part 4. Follow a path: follow a circle
 
 import numpy as np
 
-from .nodes.ShiftyBot import ShiftyBot
+from ..nodes import ShiftyBot
 
 number_of_waypoints = 10
 radius = 0.75

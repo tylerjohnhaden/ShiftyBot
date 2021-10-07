@@ -6,10 +6,8 @@ Group: 5 "Shifty"
 Part 5. extra: make an interesting shape (e.g, a star, a heart..) and
 print the shape by using odom data
 
-This is a star pattern!
+This is a heart pattern!
 """
-
-import numpy as np
 
 from ..nodes import ShiftyBot
 
@@ -35,8 +33,9 @@ if __name__ == '__main__':
     shifty = ShiftyBot()
     shifty.set_goal(
         heart_points,
-        waypoint_behavior='stop and turn',
+        waypoint_behavior='maintain speed',
         throttle_behavior='constant pid',
-        end_behavior='exit'
+        end_behavior='loop',
+        reversible=True
     )
     shifty.run()

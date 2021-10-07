@@ -43,6 +43,17 @@ class Bot(object):
 
         self.running = True
 
+    def run(self):
+        rospy.loginfo(ROSBOT_IMAGE)
+        rospy.loginfo('\nRunning Control Loop ...\n\n\n\n')
+
+        while not rospy.is_shutdown() and self.running:
+            self.step()
+            self.post_step()
+            self.rate.sleep()
+
+        rospy.loginfo('\n\n\n\n... Control Loop Closed\n\n\n\n')
+
     def step(self):
         """A single (relatively atomic) method to set the velocity
         based on all current environment and control inputs.
@@ -57,17 +68,6 @@ class Bot(object):
 
     def exit(self):
         self.running = False
-
-    def run(self):
-        rospy.loginfo(ROSBOT_IMAGE)
-        rospy.loginfo('\nRunning Control Loop ...\n\n\n\n')
-
-        while not rospy.is_shutdown() and self.running:
-            self.step()
-            self.post_step()
-            self.rate.sleep()
-
-        rospy.loginfo('\n\n\n\n... Control Loop Closed\n\n\n\n')
 
     def set_dt(self, dt):
         self.dt = dt
