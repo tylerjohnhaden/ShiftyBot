@@ -16,7 +16,7 @@ class ShiftyBot(JoystickBot, VelocityBot, TrackedBot):
         super().__init__(name)
 
         # Control Constants
-        self.throttle_pid_setpoint = 0.5
+        self.cruise_velocity = 0.5
         self.throttle_bump = 0.03
         self.steering_kp = .99
         self.throttle_kp = .2
@@ -86,7 +86,7 @@ class ShiftyBot(JoystickBot, VelocityBot, TrackedBot):
             return
 
         if self.goal_throttle_behavior == 'cruise control':
-            linear_twist = self.throttle_pid_setpoint + self.throttle_pid_step(self.throttle_pid_setpoint)
+            linear_twist = self.cruise_velocity + self.throttle_pid_step(self.cruise_velocity)
         else:
             linear_twist = (self.throttle_kp * delta_r) + self.throttle_bump
 
@@ -97,11 +97,11 @@ class ShiftyBot(JoystickBot, VelocityBot, TrackedBot):
             steering_kp,
             throttle_kp,
             throttle_bump,
-            throttle_pid_setpoint,
+            cruise_velocity,
             obstacle_safety_range
     ):
         self.steering_kp = steering_kp
         self.throttle_kp = throttle_kp
         self.throttle_bump = throttle_bump
-        self.throttle_pid_setpoint = throttle_pid_setpoint
+        self.cruise_velocity = cruise_velocity
         self.obstacle_safety_range = obstacle_safety_range

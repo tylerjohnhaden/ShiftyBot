@@ -27,19 +27,27 @@ class GoalBot(OdomBot, ReversibleBot):
         'goal_end_behavior',
         'goal_radius',
         'goal_transformation',
+        'goal_reversible'
     ]
+
+    default_waypoint = [[0, 0]]
+    waypoint_behavior_options = ['stop and turn', 'maintain speed']
+    throttle_behavior_options = ['cruise control', 'distance + bump']
+    end_behavior_options = ['exit', 'loop']
+    transformation_options = ['relative', 'global']
 
     def __init__(self, name='odom-bot'):
         super().__init__(name)
 
         self._goal_id_length = 8
         self.goal_id = self.generate_goal_id()
-        self.goal_waypoints = np.array([[0, 0]])
+        self.goal_waypoints = np.array(self.default_waypoint)
         self.goal_radius = 0.05
         self.goal_transformation = 'relative'
         self.goal_waypoint_behavior = 'stop and turn'
         self.goal_throttle_behavior = 'cruise control'
         self.goal_end_behavior = 'exit on completion'
+        self.goal_reversible = False
 
         self.goal_index = 0
         self.goal_point = 0
@@ -79,7 +87,8 @@ class GoalBot(OdomBot, ReversibleBot):
             self.goal_throttle_behavior,
             self.goal_end_behavior,
             self.goal_radius,
-            self.goal_transformation
+            self.goal_transformation,
+            self.goal_reversible,
         ]))
 
     def set_goal(
@@ -89,27 +98,28 @@ class GoalBot(OdomBot, ReversibleBot):
             throttle_behavior='cruise control',
             end_behavior='exit',
             radius=.05,
-            transformation='relative'
+            transformation='relative',
+            reversible=False,
     ):
         self.publish_current_goal()
 
-        if waypoint_behavior not in ['stop and turn', 'maintain speed']:
+        if waypoint_behavior not in self.waypoint_behavior_options:
             rospy.logwarn('unrecognized waypoint behavior: %s', waypoint_behavior)
             return
-        if throttle_behavior not in ['cruise control', 'distance + bump']:
+        if throttle_behavior not in self.throttle_behavior_options:
             rospy.logwarn('unrecognized throttle behavior: %s', throttle_behavior)
             return
-        if end_behavior not in ['exit', 'loop']:
+        if end_behavior not in self.end_behavior_options:
             rospy.logwarn('unrecognized end behavior: %s', end_behavior)
             return
         if radius < 0.001:
             rospy.logwarn('attempting to set goal point too small: %s', radius)
             return
-        if transformation not in ['relative', 'global']:
+        if transformation not in self.transformation_options:
             rospy.logwarn('unrecognized goal transformation: %s', transformation)
             return
         if waypoints is None:
-            waypoints = [[0, 0]]
+            waypoints = self.default_waypoint
 
         try:
             waypoints_np = np.array(waypoints)
@@ -124,6 +134,7 @@ class GoalBot(OdomBot, ReversibleBot):
             self.goal_throttle_behavior = throttle_behavior
             self.goal_end_behavior = end_behavior
             self.goal_id = self.generate_goal_id()
+            self.goal_reversible = bool(reversible)
 
             self.publish_current_goal()
         except Exception as e:
