@@ -6,7 +6,7 @@ Capture rate of various events.
 from collections import defaultdict
 import time
 
-from . import Bot
+from .Bot import Bot
 
 
 class MetricBot(Bot):

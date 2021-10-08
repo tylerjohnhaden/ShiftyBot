@@ -7,7 +7,7 @@ import os
 import rospy
 from std_msgs.msg import String
 
-from . import Bot
+from .Bot import Bot
 
 
 class Mapper(Bot):

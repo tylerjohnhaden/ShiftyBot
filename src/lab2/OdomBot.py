@@ -10,7 +10,7 @@ import rospy
 from std_msgs.msg import Empty
 from tf.transformations import euler_from_quaternion
 
-from . import MetricBot
+from .MetricBot import MetricBot
 
 
 class OdomBot(MetricBot):

@@ -3,7 +3,7 @@
 Keep track of forward or backwards.
 """
 
-from . import Bot
+from .Bot import Bot
 
 
 class ReversibleBot(Bot):

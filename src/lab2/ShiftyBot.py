@@ -8,7 +8,10 @@ Here should be the implementation of the step method, now that we have all state
 
 import numpy as np
 
-from . import JoystickBot, VelocityBot, TrackedBot, fix_angle
+from .JoystickBot import JoystickBot
+from .VelocityBot import VelocityBot
+from .TrackedBot import TrackedBot
+from .util import fix_angle
 
 
 class ShiftyBot(JoystickBot, VelocityBot, TrackedBot):

@@ -8,7 +8,8 @@ Obstacle detection depends on current velocity, so we inherit from OdomBot.
 import rospy
 from sensor_msgs.msg import Range
 
-from . import OdomBot, ReversibleBot
+from .OdomBot import OdomBot
+from .ReversibleBot import ReversibleBot
 
 
 class RangeBot(OdomBot, ReversibleBot):

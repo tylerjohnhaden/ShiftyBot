@@ -7,7 +7,7 @@ important for safety, efficiency, and accuracy.
 from geometry_msgs.msg import Twist
 import rospy
 
-from . import GoalBot
+from .GoalBot import GoalBot
 
 
 def low_pass(x, threshold):

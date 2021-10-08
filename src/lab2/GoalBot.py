@@ -15,7 +15,9 @@ import numpy as np
 import rospy
 from std_msgs.msg import String
 
-from . import OdomBot, ReversibleBot, fix_angle
+from .OdomBot import OdomBot
+from .ReversibleBot import ReversibleBot
+from .util import fix_angle
 
 
 class GoalBot(OdomBot, ReversibleBot):

@@ -8,7 +8,7 @@ NOTE: It is assumed the Logitech joystick is set to ( /D) and mode (light-off)
 import rospy
 from sensor_msgs.msg import Joy
 
-from . import MetricBot
+from .MetricBot import MetricBot
 
 
 class JoystickBot(MetricBot):
