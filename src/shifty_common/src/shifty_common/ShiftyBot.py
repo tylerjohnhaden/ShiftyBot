@@ -23,7 +23,7 @@ class ShiftyBot(JoystickBot, TrackedBot):
         # Control Constants
         self.cruise_velocity = 0.5
         self.throttle_bump = 0.03
-        self.steering_kp = .99
+        self.steering_kp = 1.4
         self.throttle_kp = .2
 
         # State Machine and Controllers
@@ -47,7 +47,7 @@ class ShiftyBot(JoystickBot, TrackedBot):
             return
 
         # Robot is within range of obstacle, pause for set time
-        if self.sees_obstacle() or self.state_obstacle_counter > 0:
+        if (self.sees_obstacle() or self.state_obstacle_counter > 0) and False:
             self.set_velocity(0, 0)
             if self.state_obstacle_counter > 0:
                 rospy.logdebug('obstacle counter = %s', self.state_obstacle_counter)
@@ -113,11 +113,16 @@ class ShiftyBot(JoystickBot, TrackedBot):
 
             self.goal_index += 1
             self.goal_point = (self.goal_point + 1) % len(self.goal_waypoints)
+
+            if self.goal_waypoint_behavior == 'stop and turn' and self.goal_reversible:
+                delta_t, _ = self.get_current_goal_delta()
+                if abs(delta_t) > 1.1 * (np.pi / 2):
+                    self.set_reverse_direction()
             return
 
         current_steering_kp = self.steering_kp
-        if delta_r < 0.2:
-            current_steering_kp *= 2  # todo: calibrate
+        #if delta_r < 0.2:
+        #    current_steering_kp *= 2  # todo: calibrate
 
         angular_twist = current_steering_kp * delta_t
         if self.state_turning:
@@ -133,6 +138,9 @@ class ShiftyBot(JoystickBot, TrackedBot):
             # todo: detect death spiral based on delta_r delta_t and linear_twist
         else:
             linear_twist = (self.throttle_kp * delta_r) + self.throttle_bump
+
+        if not self.forward_direction:
+            linear_twist = -linear_twist
 
         rospy.loginfo('Driving towards next waypoint: radius diff = %s', delta_r)
         self.set_velocity(linear_twist, angular_twist)

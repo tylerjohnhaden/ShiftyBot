@@ -47,6 +47,7 @@ class Bot(object):
         rospy.loginfo(ROSBOT_IMAGE)
         rospy.loginfo('\nRunning Control Loop ...\n\n\n\n')
 
+        self.running = True
         while not rospy.is_shutdown() and self.running:
             self.step()
             self.post_step()

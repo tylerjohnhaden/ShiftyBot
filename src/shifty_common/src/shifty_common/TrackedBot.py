@@ -33,7 +33,7 @@ class TrackedBot(RangeBot):
         self.tracking_pub = rospy.Publisher('tracking', String, queue_size=10)
 
     def post_step(self):
-        self.tracking_pub.publish(','.join(map(str, [
+        self.tracking_pub.publish(';'.join(map(str, [
             self.goal_id,
             time.time(),
             self.goal_index,

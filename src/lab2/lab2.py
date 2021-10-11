@@ -50,8 +50,10 @@ def part3i(shifty, square_width=1.0):
         ],
         waypoint_behavior='stop and turn',
         throttle_behavior='cruise control',
-        end_behavior='loop'
+        end_behavior='loop',
+        transformation='global',
     )
+    
 
 
 def part3ii(shifty, square_width=1.0):
@@ -68,11 +70,13 @@ def part3ii(shifty, square_width=1.0):
         ],
         waypoint_behavior='maintain speed',
         throttle_behavior='cruise control',
-        end_behavior='loop'
+        end_behavior='loop',
+        transformation='global',
     )
+    shifty.cruise_velocity = 0.2
 
 
-def part4(shifty, number_of_waypoints=10, radius=0.75):
+def part4(shifty, number_of_waypoints=20, radius=0.75):
     """Part 4. Follow a path: follow a circle
     """
     shifty.set_goal(
@@ -82,28 +86,32 @@ def part4(shifty, number_of_waypoints=10, radius=0.75):
         ] for x in range(0, number_of_waypoints + 1)],
         waypoint_behavior='maintain speed',
         throttle_behavior='cruise control',
-        end_behavior='loop'
+        radius=.2,
+        end_behavior='loop',
+        transformation='global',
     )
-    shifty.cruise_velocity = 0.1
+    shifty.cruise_velocity = 0.4
 
 
-def part5star(shifty, number_of_waypoints=10, radius=0.75):
+def part5star(shifty, radius=0.75):
     """Part 5. extra: make an interesting shape (e.g, a star, a heart..) and
     print the shape by using odom data
 
     This is a star pattern!
     """
-    number_of_waypoints = 10
     radius = 0.75
+    waypoints = [[
+        np.cos(2.0 * np.pi * (float(x) / 5)) * radius,
+        np.sin(2.0 * np.pi * (float(x) / 5)) * radius
+    ] for x in range(0, 6)]
 
     shifty.set_goal(
-        [[
-            np.cos(2 * np.pi * (x / number_of_waypoints)) * radius,
-            np.sin(2 * np.pi * (x / number_of_waypoints)) * radius
-        ] for x in range(0, number_of_waypoints + 1)],
-        waypoint_behavior='maintain speed',
+        [waypoints[i] for i in [0, 2, 4, 1, 3]],
+        waypoint_behavior='stop and turn',
         throttle_behavior='cruise control',
-        end_behavior='loop'
+        end_behavior='loop',
+        transformation='global',
+        reversible=True,
     )
 
 
@@ -146,10 +154,10 @@ if __name__ == '__main__':
 
     #part1(shifty)
     #part2(shifty)
-    # part3i(shifty)
-    # part3ii(shifty)  # not done
-    part4(shifty)
-    # part5star(shifty)
+    #part3i(shifty)
+    #part3ii(shifty)
+    #part4(shifty)
+    part5star(shifty)
     # part5heart(shifty)
 
     shifty.run()

@@ -7,6 +7,7 @@ from std_msgs.msg import String
 
 from .Bot import Bot
 from .TrackedBot import TrackedBot
+from .GoalBot import GoalBot
 
 
 class Mapper(Bot):
@@ -52,13 +53,11 @@ class Mapper(Bot):
     def init_goal_subscriber(self):
         def _goal_callback(data):
             try:
-                rospy.loginfo('got goal')
-                goal_values = str(data)[7: -1].split(',')
-                rospy.loginfo('goal parts: %s', goal_values)
+                goal_values = str(data)[7: -1].split(';')
                 if goal_values[0] and goal_values[0] not in self.goals.keys():
                     rospy.loginfo('\n\nNew Goal: %s\n', data)
                     self.goals[goal_values[0]] = '{{ {0} }}'.format(', '.join(map(
-                        (lambda k, v: '"{0}": {1}'.format(k, v)),
+                        (lambda kv: '"{0}": {1}'.format(kv[0], kv[1])),
                         zip(GoalBot.goal_headers, goal_values)
                     )))
             except Exception as e:
@@ -68,7 +67,7 @@ class Mapper(Bot):
 
     def init_tracking_subscriber(self):
         def _tracking_callback(data):
-            tracking_values = str(data)[7: -1].split(',')
+            tracking_values = str(data)[7: -1].split(';')
             self.trackings.append('{{ {0} }}'.format(', '.join(map(
                 (lambda kv: '"{0}": {1}'.format(kv[0], kv[1])),
                 zip(TrackedBot.tracking_headers, tracking_values)

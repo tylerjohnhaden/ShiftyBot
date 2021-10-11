@@ -9,6 +9,7 @@ Waypoint coordinates are typically relative, like [1.5, 1.5]. We can use the glo
 the actual coordinates. Benefits of this is correlated values over several runs (without extra-terrestrial movement).
 """
 
+import json
 import random
 
 import numpy as np
@@ -68,7 +69,6 @@ class GoalBot(OdomBot, ReversibleBot):
 
     def get_current_goal_delta(self):
         next_waypoint = self.goal_waypoints[self.goal_point]
-        print(next_waypoint)
 
         if self.goal_transformation == 'relative':
             next_waypoint = self.transform_relative_to_global(next_waypoint)
@@ -83,9 +83,9 @@ class GoalBot(OdomBot, ReversibleBot):
         return fix_angle(delta_theta - self.pose_t), delta_distance
 
     def publish_current_goal(self):
-        self.goal_pub.publish(','.join(map(str, [
+        self.goal_pub.publish(';'.join(map(str, [
             self.goal_id,
-            self.goal_waypoints,
+            json.dumps(self.goal_waypoints.tolist()),
             self.goal_waypoint_behavior,
             self.goal_throttle_behavior,
             self.goal_end_behavior,
@@ -131,6 +131,7 @@ class GoalBot(OdomBot, ReversibleBot):
                 return
 
             self.goal_waypoints = waypoints_np
+            self.goal_point = 0
             self.goal_radius = radius
             self.goal_transformation = transformation
             self.goal_waypoint_behavior = waypoint_behavior
