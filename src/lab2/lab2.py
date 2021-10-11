@@ -84,7 +84,7 @@ def part4(shifty, number_of_waypoints=10, radius=0.75):
         throttle_behavior='cruise control',
         end_behavior='loop'
     )
-    shifty.cruise_velocity = 0.15
+    shifty.cruise_velocity = 0.1
 
 
 def part5star(shifty, number_of_waypoints=10, radius=0.75):

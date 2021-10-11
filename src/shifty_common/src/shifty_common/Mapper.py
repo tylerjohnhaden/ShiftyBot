@@ -23,20 +23,25 @@ class Mapper(Bot):
         self.data_js_file = os.path.join(self.site_path, 'data.js')
         self.data_js_named_file = os.path.join(self.site_path, 'data_' + self.mapper_id + '.js')
         self.data_js_template = '// auto generated\n\n' \
-                                'const goals = [\n{goal_rows}\n];\n' \
+                                'let goals = [\n{goal_rows}\n];\n' \
                                 'const tracking = [\n{tracking_rows}\n];'
 
         if not os.path.exists(self.site_path):
-            raise FileNotFoundError('Missing site folder: ' + self.site_path)
+            raise IOError('Missing site folder: ' + self.site_path)
 
         # reset dt to 2 seconds for slow js file generation
         self.set_dt(2)
+
+        self.init_goal_subscriber()
+        self.init_tracking_subscriber()
 
     def step(self):
         js_generated_file = self.data_js_template.format(
             goal_rows=',\n'.join(self.goals.values()),
             tracking_rows=',\n'.join(self.trackings)
         )
+
+        rospy.loginfo('Mapper writing to %s', self.data_js_file)
 
         with open(self.data_js_file, 'w') as file:
             file.write(js_generated_file)
@@ -47,9 +52,11 @@ class Mapper(Bot):
     def init_goal_subscriber(self):
         def _goal_callback(data):
             try:
-                goal_values = data.split(',')
+                rospy.loginfo('got goal')
+                goal_values = str(data)[7: -1].split(',')
+                rospy.loginfo('goal parts: %s', goal_values)
                 if goal_values[0] and goal_values[0] not in self.goals.keys():
-                    print('\n\n\n\nNew Goal:', data, '\n\n\n\n')
+                    rospy.loginfo('\n\nNew Goal: %s\n', data)
                     self.goals[goal_values[0]] = '{{ {0} }}'.format(', '.join(map(
                         (lambda k, v: '"{0}": {1}'.format(k, v)),
                         zip(GoalBot.goal_headers, goal_values)
@@ -61,12 +68,11 @@ class Mapper(Bot):
 
     def init_tracking_subscriber(self):
         def _tracking_callback(data):
-            tracking_values = data.split(',')
+            tracking_values = str(data)[7: -1].split(',')
             self.trackings.append('{{ {0} }}'.format(', '.join(map(
-                (lambda k, v: '"{0}": {1}'.format(k, v)),
+                (lambda kv: '"{0}": {1}'.format(kv[0], kv[1])),
                 zip(TrackedBot.tracking_headers, tracking_values)
             ))))
 
-            print('tracking:', tracking_values)
 
         rospy.Subscriber('tracking', String, _tracking_callback)

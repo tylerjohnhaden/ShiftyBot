@@ -70,6 +70,6 @@ class Bot(object):
         self.running = False
 
     def set_dt(self, dt):
-        self.dt = dt
-        self.hz = int(1 / self.dt)
+        self.dt = float(dt)
+        self.hz = (1.0 / self.dt)
         self.rate = rospy.Rate(self.hz)

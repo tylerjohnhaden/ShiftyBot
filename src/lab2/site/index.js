@@ -128,6 +128,17 @@ class Map {
     }
 }
 
+if (goals.length == 0) {
+  goals = [{
+    "goal_id": "asdf",
+    "goal_waypoints": [[1.5, 1.5]],
+    "goal_throttle_behavior": "asdf",
+    "goal_end_behavior": "asdf",
+    "goal_radius": 0.05,
+    "goal_reversible": "asdf"
+  }];
+}
+
 const goalListElement = document.getElementById("goalList");
 const mapDiv = document.getElementById("mapDiv");
 function draw() {
@@ -162,7 +173,8 @@ function draw() {
         map.drawLine(tracking[i - 1]['x'], tracking[i - 1]['y'], tracking[i]['x'], tracking[i]['y']);
     }
     map.drawAxes();
-    map.drawRobot(0, 0, 0);
+    // let lastPose = tracking[tracking.length - 1];
+    // map.drawRobot(lastPose["x"], lastPose["y"], 0);
     map.canvas.classList = "mainMap";
 
     mapDiv.innerHTML = '';
