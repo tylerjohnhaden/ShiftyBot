@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import random
 import string
 import os
@@ -8,10 +6,11 @@ import rospy
 from std_msgs.msg import String
 
 from .Bot import Bot
+from .TrackedBot import TrackedBot
 
 
 class Mapper(Bot):
-    def __init__(self, name='mapper'):
+    def __init__(self, site_path='./site', name='mapper'):
         super(Mapper, self).__init__(name)
 
         self.goals = {}
@@ -20,7 +19,7 @@ class Mapper(Bot):
         self.mapper_id = (''.join(random.choice(string.ascii_letters) for _ in range(3)) +
                           ''.join(str(random.randint(0, 9)) for _ in range(3))).lower()
 
-        self.site_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir, 'site')
+        self.site_path = os.path.abspath(site_path)
         self.data_js_file = os.path.join(self.site_path, 'data.js')
         self.data_js_named_file = os.path.join(self.site_path, 'data_' + self.mapper_id + '.js')
         self.data_js_template = '// auto generated\n\n' \
@@ -28,7 +27,7 @@ class Mapper(Bot):
                                 'const tracking = [\n{tracking_rows}\n];'
 
         if not os.path.exists(self.site_path):
-            raise FileNotFoundError('Missing path:' + self.site_path)
+            raise FileNotFoundError('Missing site folder: ' + self.site_path)
 
         # reset dt to 2 seconds for slow js file generation
         self.set_dt(2)
@@ -71,7 +70,3 @@ class Mapper(Bot):
             print('tracking:', tracking_values)
 
         rospy.Subscriber('tracking', String, _tracking_callback)
-
-
-if __name__ == "__main__":
-    Mapper().run()

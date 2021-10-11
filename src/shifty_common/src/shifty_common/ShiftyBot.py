@@ -31,9 +31,11 @@ class ShiftyBot(JoystickBot, TrackedBot):
         self.throttle_pid_integral = 0
 
         self.obstacle_wait_time = 2  # seconds
+        self.joystick_wait_time = 0.5  # seconds
         self.stop_wait_time = 1  # seconds
 
         self.state_obstacle_counter = 0
+        self.state_joystick_counter = 0
         self.state_stop_counter = 0
         self.state_turning = True
 
@@ -55,8 +57,14 @@ class ShiftyBot(JoystickBot, TrackedBot):
             return
 
         # Joystick button is pressed, pause till button is released
-        if any(self.joystick_buttons):
-            rospy.loginfo('Joystick "pause" is currently pressed')
+        if self.is_joystick_operated():
+            rospy.loginfo('Joystick is currently being operated')
+            self.set_velocity(self.get_joystick_linear_throttle(), self.get_joystick_angular_throttle())
+            self.state_joystick_counter = int(self.joystick_wait_time * self.hz)
+            return
+
+        if self.state_joystick_counter > 0:
+            rospy.loginfo('Joystick was recently operated')
             self.set_velocity(0, 0)
             return
 
@@ -82,7 +90,7 @@ class ShiftyBot(JoystickBot, TrackedBot):
                 self.state_stop_counter = int(self.stop_wait_time * self.hz)
                 self.state_turning = True
 
-                if self.goal_reversible and abs(delta_t) - 0.2 > (np.pi / 2):
+                if self.goal_reversible and abs(delta_t) > 1.1 * (np.pi / 2):
                     self.set_reverse_direction()
 
             self.goal_index += 1
@@ -92,7 +100,7 @@ class ShiftyBot(JoystickBot, TrackedBot):
 
         current_steering_kp = self.steering_kp
         if delta_r < 0.2:
-            current_steering_kp * 2
+            current_steering_kp *= 2  # todo: calibrate
         angular_twist = current_steering_kp * delta_t
         if self.state_turning:
             rospy.loginfo('Turning towards next waypoint: angle diff = %s', delta_t)
