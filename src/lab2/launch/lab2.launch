@@ -5,7 +5,9 @@
         <param name="dev" type="string" value="/dev/input/js0" />
     </node>
 
-    <node name="mapper_node" pkg="lab2" type="map.py" respawn="true"/>
+    <node name="mapper_node" pkg="lab2" type="map.py" respawn="true" output="screen"/>
 
     <node name="shifty_node" pkg="lab2" type="lab2.py" output="screen"/>
+
+
 </launch>
