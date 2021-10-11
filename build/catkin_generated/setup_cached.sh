@@ -7,8 +7,5 @@
 # new environment variables
 
 # modified environment variables
-export CMAKE_PREFIX_PATH="/home/robot5/tyler_scratch/devel:$CMAKE_PREFIX_PATH"
-export LD_LIBRARY_PATH="/home/robot5/tyler_scratch/devel/lib:$LD_LIBRARY_PATH"
 export PWD="/home/robot5/tyler_scratch/build"
-export ROSLISP_PACKAGE_DIRECTORIES="/home/robot5/tyler_scratch/devel/share/common-lisp:$ROSLISP_PACKAGE_DIRECTORIES"
-export ROS_PACKAGE_PATH="/home/robot5/tyler_scratch/src:$ROS_PACKAGE_PATH"
+export PYTHONPATH="/home/robot5/tyler_scratch/devel/lib/python2.7/dist-packages:$PYTHONPATH"

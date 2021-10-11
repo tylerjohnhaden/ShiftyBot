@@ -1,0 +1,8 @@
+prefix=/home/robot5/tyler_scratch/devel
+
+Name: shifty_common
+Description: Description of shifty_common
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

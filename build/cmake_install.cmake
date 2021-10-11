@@ -127,6 +127,8 @@ if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
   include("/home/robot5/tyler_scratch/build/gtest/cmake_install.cmake")
   include("/home/robot5/tyler_scratch/build/lab1/cmake_install.cmake")
+  include("/home/robot5/tyler_scratch/build/lab2/cmake_install.cmake")
+  include("/home/robot5/tyler_scratch/build/shifty_common/cmake_install.cmake")
 
 endif()
 

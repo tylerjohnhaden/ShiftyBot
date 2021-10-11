@@ -6,3 +6,5 @@
 # testing this directory and lists subdirectories to be tested as well.
 subdirs(gtest)
 subdirs(lab1)
+subdirs(lab2)
+subdirs(shifty_common)

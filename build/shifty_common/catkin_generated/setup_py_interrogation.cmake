@@ -1,0 +1,6 @@
+set(shifty_common_SETUP_PY_VERSION "0.0.0")
+set(shifty_common_SETUP_PY_SCRIPTS "")
+set(shifty_common_SETUP_PY_PACKAGES "shifty_common")
+set(shifty_common_SETUP_PY_PACKAGE_DIRS "src/shifty_common")
+set(shifty_common_SETUP_PY_MODULES "")
+set(shifty_common_SETUP_PY_MODULE_DIRS "")

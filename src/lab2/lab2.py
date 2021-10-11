@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from .ShiftyBot import ShiftyBot
+from shifty_common.ShiftyBot import ShiftyBot
 
 """Autonomous Mobile Robots - Lab 2
 Group: 5 "Shifty"
@@ -32,42 +32,42 @@ def part2(shifty):
     shifty.set_goal(
         [[1.5, 1.5]],
         waypoint_behavior='stop and turn',
-        throttle_behavior='constant pid'
+        throttle_behavior='cruise control'
     )
 
 
-def part3i(shifty, square_width=1):
+def part3i(shifty, square_width=1.0):
     """Part 3. Go to multiple points: specifically, 4 corners of a square.
 
-    Implement: i) “stop, turn, and go” behavior
+    Implement: i) "stop, turn, and go" behavior
     """
     shifty.set_goal(
         [
-            [square_width / 2, square_width / 2],
-            [square_width / 2, -square_width / 2],
-            [-square_width / 2, -square_width / 2],
-            [-square_width / 2, square_width / 2]
+            [square_width / 2.0, square_width / 2.0],
+            [square_width / 2.0, -square_width / 2.0],
+            [-square_width / 2.0, -square_width / 2.0],
+            [-square_width / 2.0, square_width / 2.0]
         ],
         waypoint_behavior='stop and turn',
-        throttle_behavior='constant pid',
+        throttle_behavior='cruise control',
         end_behavior='loop'
     )
 
 
-def part3ii(shifty, square_width=1):
+def part3ii(shifty, square_width=1.0):
     """Part 3. Go to multiple points: specifically, 4 corners of a square.
 
     Implement: ii) smooth constant linear velocity through the points
     """
     shifty.set_goal(
         [
-            [square_width / 2, square_width / 2],
-            [square_width / 2, -square_width / 2],
-            [-square_width / 2, -square_width / 2],
-            [-square_width / 2, square_width / 2]
+            [square_width / 2.0, square_width / 2.0],
+            [square_width / 2.0, -square_width / 2.0],
+            [-square_width / 2.0, -square_width / 2.0],
+            [-square_width / 2.0, square_width / 2.0]
         ],
         waypoint_behavior='maintain speed',
-        throttle_behavior='constant pid',
+        throttle_behavior='cruise control',
         end_behavior='loop'
     )
 
@@ -77,13 +77,14 @@ def part4(shifty, number_of_waypoints=10, radius=0.75):
     """
     shifty.set_goal(
         [[
-            np.cos(2 * np.pi * (x / number_of_waypoints)) * radius,
-            np.sin(2 * np.pi * (x / number_of_waypoints)) * radius
+            np.cos(2.0 * np.pi * (float(x) / number_of_waypoints)) * radius,
+            np.sin(2.0 * np.pi * (float(x) / number_of_waypoints)) * radius
         ] for x in range(0, number_of_waypoints + 1)],
         waypoint_behavior='maintain speed',
-        throttle_behavior='constant pid',
+        throttle_behavior='cruise control',
         end_behavior='loop'
     )
+    shifty.cruise_velocity = 0.15
 
 
 def part5star(shifty, number_of_waypoints=10, radius=0.75):
@@ -101,7 +102,7 @@ def part5star(shifty, number_of_waypoints=10, radius=0.75):
             np.sin(2 * np.pi * (x / number_of_waypoints)) * radius
         ] for x in range(0, number_of_waypoints + 1)],
         waypoint_behavior='maintain speed',
-        throttle_behavior='constant pid',
+        throttle_behavior='cruise control',
         end_behavior='loop'
     )
 
@@ -134,7 +135,7 @@ def part5heart(shifty, number_of_waypoints=10, radius=0.75):
     shifty.set_goal(
         heart_points,
         waypoint_behavior='maintain speed',
-        throttle_behavior='constant pid',
+        throttle_behavior='cruise control',
         end_behavior='loop',
         reversible=True
     )
@@ -143,11 +144,11 @@ def part5heart(shifty, number_of_waypoints=10, radius=0.75):
 if __name__ == '__main__':
     shifty = ShiftyBot()
 
-    part1(shifty)
-    # part2(shifty)
+    #part1(shifty)
+    #part2(shifty)
     # part3i(shifty)
-    # part3ii(shifty)
-    # part4(shifty)
+    # part3ii(shifty)  # not done
+    part4(shifty)
     # part5star(shifty)
     # part5heart(shifty)
 

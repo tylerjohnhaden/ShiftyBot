@@ -3,6 +3,6 @@ prefix=/home/robot5/tyler_scratch/install
 Name: lab1
 Description: Description of lab1
 Version: 0.0.0
-Cflags: 
+Cflags: -I${prefix}/include
 Libs: -L${prefix}/lib 
 Requires: 

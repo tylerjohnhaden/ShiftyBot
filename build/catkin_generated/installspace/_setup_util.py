@@ -270,7 +270,7 @@ if __name__ == '__main__':
 
         if not args.local:
             # environment at generation time
-            CMAKE_PREFIX_PATH = '/home/robot5/catkin_ws/devel;/home/robot5/rosbot_ws/devel;/home/robot5/jackal_ws/devel;/opt/ros/kinetic'.split(';')
+            CMAKE_PREFIX_PATH = '/home/robot5/christof_scratch/devel;/home/robot5/ashish_scratch/devel;/home/robot5/tyler_scratch/devel;/home/robot5/catkin_ws/devel;/home/robot5/rosbot_ws/devel;/home/robot5/jackal_ws/devel;/opt/ros/kinetic'.split(';')
         else:
             # don't consider any other prefix path than this one
             CMAKE_PREFIX_PATH = []

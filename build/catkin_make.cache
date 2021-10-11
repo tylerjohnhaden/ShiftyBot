@@ -1,2 +1,2 @@
-lab1
+lab1:lab2:shifty_common
 -DCATKIN_DEVEL_PREFIX=/home/robot5/tyler_scratch/devel -DCMAKE_INSTALL_PREFIX=/home/robot5/tyler_scratch/install -G Unix Makefiles

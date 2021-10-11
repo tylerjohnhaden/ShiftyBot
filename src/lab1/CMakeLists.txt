@@ -108,7 +108,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES lab1
-  CATKIN_DEPENDS message_runtime lab1
+#  CATKIN_DEPENDS message_runtime lab1
 #  DEPENDS system_lib
 )
 
