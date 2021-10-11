@@ -37,7 +37,7 @@ class Bot(object):
     def __init__(self, name='bot'):
         rospy.init_node(name, anonymous=True, log_level=rospy.INFO)
 
-        self.dt = 0.01  # todo: see if calibration changes behavior
+        self.dt = 0.1  # todo: see if calibration changes behavior
         self.hz = int(1 / self.dt)
         self.rate = rospy.Rate(self.hz)
 

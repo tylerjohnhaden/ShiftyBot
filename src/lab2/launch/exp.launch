@@ -1,0 +1,11 @@
+<launch>
+    <arg name="part" default="1" />
+
+    <node name="joy_node" pkg="joy" type="joy_node" respawn="true">
+        <param name="dev" type="string" value="/dev/input/js0" />
+    </node>
+
+    <node name="mapper_node" pkg="lab2" type="map.py" respawn="true"/>
+
+    <node name="shifty_node" pkg="lab2" type="experiment.py" output="screen"/>
+</launch>
