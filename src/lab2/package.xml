@@ -4,6 +4,7 @@
     <version>0.0.0</version>
     <description>The lab2 package</description>
 
+    <maintainer email="tylerjohnhaden@gmail.com">tylerjohnhaden</maintainer>
     <author email="tylerjohnhaden@gmail.com">tylerjohnhaden</author>
     <url type="website">https://github.com/tylerjohnhaden</url>
     <license>TODO</license>
