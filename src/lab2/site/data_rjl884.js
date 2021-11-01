@@ -1,6 +1,10 @@
 // auto generated
 
 let goals = [
+{ "goal_id": 68026501, "goal_waypoints": [[0.75, 0.0], [-0.6067627457812105, 0.4408389392193549], [0.23176274578121042,\
+  \ -0.7132923872213652], [0.2317627457812106, 0.7132923872213651], [-0.6067627457812107,\
+  \ -0.4408389392193548]], "goal_waypoint_behavior": stop and turn, "goal_throttle_behavior": cruise control, "goal_end_behavior": loop, "goal_radius": 0.05, "goal_transformation": relative, "goal_reversible": True },
+{ "goal_id": 43804174, "goal_waypoints": [[0, 0]], "goal_waypoint_behavior": stop and turn, "goal_throttle_behavior": cruise control, "goal_end_behavior": exit on completion, "goal_radius": 0.05, "goal_transformation": relative, "goal_reversible": False }
 ];
 const tracking = [
 { "goal_id": 68026501, "time": 1634146076.64, "goal_index": 0, "goal_point": 0, "x": -0.343329059908, "y": 0.322285766295, "t": 0.251151736555, "linear_velocity": 2.29981287919e-14, "angular_velocity": -5.97605983287e-10, "odom_rate": 0.0, "range_rate": 0.0, "joystick_rate": 0.0 },

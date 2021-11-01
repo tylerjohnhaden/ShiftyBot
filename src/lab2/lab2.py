@@ -41,6 +41,7 @@ def part3i(shifty, square_width=1.0):
 
     Implement: i) "stop, turn, and go" behavior
     """
+    shifty.cruise_velocity = 0.2
     shifty.set_goal(
         [
             [square_width / 2.0, square_width / 2.0],
@@ -51,7 +52,7 @@ def part3i(shifty, square_width=1.0):
         waypoint_behavior='stop and turn',
         throttle_behavior='cruise control',
         end_behavior='loop',
-        transformation='global',
+        transformation='relative',
     )
     
 
@@ -110,7 +111,7 @@ def part5star(shifty, radius=0.75):
         waypoint_behavior='stop and turn',
         throttle_behavior='cruise control',
         end_behavior='loop',
-        transformation='global',
+        transformation='relative',
         reversible=True,
     )
 

@@ -23,7 +23,7 @@ class ShiftyBot(JoystickBot, TrackedBot):
         # Control Constants
         self.cruise_velocity = 0.5
         self.throttle_bump = 0.03
-        self.steering_kp = 1.4
+        self.steering_kp = 1
         self.throttle_kp = .2
 
         # State Machine and Controllers
@@ -40,6 +40,10 @@ class ShiftyBot(JoystickBot, TrackedBot):
         self.state_turning = True
 
     def step(self):
+        # temp
+        self.set_velocity(self.get_joystick_linear_throttle(), self.get_joystick_angular_throttle())
+        return
+        
         # We don't know the global coordinates yet, wait for first odom reading
         if not self.is_global_pose_set:
             rospy.loginfo('Waiting till Odometry data is published')
@@ -47,7 +51,7 @@ class ShiftyBot(JoystickBot, TrackedBot):
             return
 
         # Robot is within range of obstacle, pause for set time
-        if (self.sees_obstacle() or self.state_obstacle_counter > 0) and False:
+        if (self.sees_obstacle() or self.state_obstacle_counter > 0):
             self.set_velocity(0, 0)
             if self.state_obstacle_counter > 0:
                 rospy.logdebug('obstacle counter = %s', self.state_obstacle_counter)

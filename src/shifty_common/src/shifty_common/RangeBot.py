@@ -1,9 +1,37 @@
+"""A Lidar Enabled Bot
+
+"""
+
+import rospy
+from sensor_msgs.msg import LaserScan
+
+from .VelocityBot import VelocityBot
+
+
+class RangeBot(VelocityBot):
+    def __init__(self, name='range-bot'):
+        super(RangeBot, self).__init__(name)
+
+        self.arc = 60
+        self.obstacle = False
+
+        def _lidar_callback(data):
+            self.obstacle = any(data.ranges[i] < 0.5 for i in range(-(self.arc / 2), self.arc / 2))
+            #Sprint(self.obstacle)
+
+        rospy.Subscriber('/scan', LaserScan, _lidar_callback)
+    def sees_obstacle(self):
+        return self.sees_obstacle
+
+'''
 """A Short-Term-Memory Range Enabled Bot
 
 Capture range measurements. Minimum of last n measurements is taken as truth.
 
 Obstacle detection depends on current velocity, so we inherit from OdomBot.
 """
+
+
 
 import rospy
 from sensor_msgs.msg import Range
@@ -52,4 +80,4 @@ class RangeBot(VelocityBot):
             return False
         threshold = self.obstacle_safety_range * (0.25) * self.obstacle_velocity_multiplier
         return threshold > min(sliding_window)
-
+'''
