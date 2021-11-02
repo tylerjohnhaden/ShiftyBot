@@ -27,6 +27,8 @@ class LineBot(ShiftyBot):
         self.integral = 0
         self.prev = 0
         self.range = 420
+        
+        self.heading = 0
 
         def _odom_Callback(odom):
 	        global yaw,x,y,vx
@@ -68,29 +70,19 @@ class LineBot(ShiftyBot):
                     cv2.line(canny, (x1, y1), (x0, y0), (128, 128, 128), 4)
                 x_center = len_sumx / sum(weights)
                 y_center = len_sumy / sum(weights)
+                
+                dx = x_center - (cols / 2)
+                dy = rows - y_center
+                dtheta = np.arctan2(-dx, dy)
+                
+                self.heading = min(max(dtheta,-0.2), 0.2)
+                print(dtheta)
+                
                 cv2.circle(canny, (int(x_center), int(y_center)), 3, (255,255,255), 3)  
-                avg_theta = theta_total / len(lines)
+
             cv2.imshow('0', canny)
             cv2.waitKey(1)
-                    
-                #print('theta', avg_theta)
             
-            # crop lower half of image
-            tape_indices = []
-            
-            for k in range(self.range,480):   #450, 480
-                horz_line = opening[k, 0:cols]
-                ones = np.array([i for i in range(cols) if horz_line[i] > 0])
-                if len(ones) == 0:
-                    pass
-                else:
-                    m = np.mean(ones) - (cols / 2)
-                    tape_indices.append(int(m))
-
-            if len(tape_indices) == 0:
-                self.tape_bearing = 0
-            else: 
-                self.tape_bearing = np.mean(tape_indices)
             
         rospy.Subscriber("/camera/rgb/image_raw/compressed", CompressedImage, _camera_callback)
         rospy.Subscriber("/odom", Odometry, _odom_Callback)
@@ -106,20 +98,7 @@ class LineBot(ShiftyBot):
 
     
     def step(self):
-        return
-        #print(self.tape_bearing)
-        bearing = atan2(np.sin(-self.tape_bearing / 400),np.cos(-self.tape_bearing / 400))
-        print(bearing)
-        #bearing = self.pid(bearing, self.bearing)        
-        #bearing = self.throttle_pid_step(bearing)
-        if np.abs(bearing)>0.2:
-            self.range = 420
-        else:
-            self.range = 460        
-        if True or (np.abs(self.tape_bearing)<50):
-            self.set_velocity(0, bearing)
-        else:    
-            self.set_velocity(0, bearing*0.5)
+       self.set_velocity(0.2, self.heading * 1.5)
 
 if __name__ == '__main__':
     shifty = LineBot()
